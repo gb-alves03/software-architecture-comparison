@@ -17,6 +17,9 @@ O objetivo é **comparar desempenho, escalabilidade e manutenção** entre os di
 - **groupId:** `com.tcc`
 - **artifactId:** `banking-app-monolith`
 
+<img width="1234" height="799" alt="image" src="https://github.com/user-attachments/assets/ab9b497c-fc33-413a-9fe9-32c0ca36f8cb" />
+
+
 ---
 
 ### 🔹 2. Microsserviços
@@ -34,6 +37,9 @@ Composto pelos seguintes serviços:
 - `discovery-service`
 
 **groupId base:** `com.tcc.microservices`
+
+<img width="1512" height="852" alt="image" src="https://github.com/user-attachments/assets/d0f559f1-5a05-4d19-84d4-afc1c331f0e4" />
+
 
 ---
 

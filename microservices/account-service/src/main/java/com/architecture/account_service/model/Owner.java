@@ -18,6 +18,18 @@ public class Owner {
     @Column(name = "phone", nullable = false)
     private String phone;
 
+    public void validate() {
+        if (name == null || name.isBlank()) {
+            throw new RuntimeException("Name cannot be a null");
+        }
+        if (email == null || email.isBlank() || !email.matches("^[\\w-.]+@[\\w-]+\\.[a-z]{2,}$")) {
+            throw new RuntimeException("Invalid email");
+        }
+        if (phone == null || phone.isBlank() || !phone.matches("\\+?[0-9]{10,15}")) {
+            throw new RuntimeException("Invalid phone");
+        }
+    }
+
     public long getOwnerId() {
         return ownerId;
     }

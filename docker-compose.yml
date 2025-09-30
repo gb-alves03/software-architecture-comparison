@@ -1,0 +1,33 @@
+version: "4.0"
+
+services:
+  account-service-api:
+    build:
+      context: ./microservices/account-service
+    container_name: account_service_api
+    depends_on:
+      - account-service-database
+    ports:
+      - 8081:8080
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://account-service-database:5432/account_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+
+  account-service-database:
+    image: postgres:14.3-alpine
+    container_name: account_service_database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: account_service
+    ports:
+      - 5433:5432
+    networks:
+      - microservice-network
+
+networks:
+  microservice-network:
+    driver: bridge

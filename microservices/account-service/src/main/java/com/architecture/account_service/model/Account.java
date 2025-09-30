@@ -21,6 +21,15 @@ public class Account {
     @JoinColumn(name = "owner_id", referencedColumnName = "ownerId")
     private Owner owner;
 
+    public void validate() {
+        if (owner == null) {
+            throw new RuntimeException("Owner is required");
+        }
+        if (balance == null || balance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Invalid balance");
+        }
+    }
+
     public long getAccountId() {
         return accountId;
     }

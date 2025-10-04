@@ -6,6 +6,5 @@ public record FraudRequest(
         String transactionId,
         BigDecimal amount,
         String transactionType,
-        String sourceAccount,
-        String destinationAccount
+        String accountId
 ) {}

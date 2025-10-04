@@ -19,4 +19,5 @@ public class FraudCheckDocument {
     private BigDecimal amount;
     private String transactionType;
     private boolean fraudulent;
+    private String reason;
 }

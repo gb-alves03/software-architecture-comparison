@@ -17,7 +17,7 @@ O objetivo é **comparar desempenho, escalabilidade e manutenção** entre os di
 - **groupId:** `com.tcc`
 - **artifactId:** `banking-app-monolith`
 
-<img width="1234" height="799" alt="image" src="https://github.com/user-attachments/assets/ab9b497c-fc33-413a-9fe9-32c0ca36f8cb" />
+<img width="930" height="762" alt="image" src="https://github.com/user-attachments/assets/b5d68f48-8888-4bbd-be65-bd681e7aca3f" />
 
 
 ---
@@ -30,15 +30,12 @@ O objetivo é **comparar desempenho, escalabilidade e manutenção** entre os di
 📂 Diretório: `/banking-app-microservices`  
 Composto pelos seguintes serviços:
 - `account-service`
-- `transaction-service`
 - `payment-service`
-- `owner-service`
-- `gateway-service`
-- `discovery-service`
+- `notification-service`
 
 **groupId base:** `com.tcc.microservices`
 
-<img width="1512" height="852" alt="image" src="https://github.com/user-attachments/assets/d0f559f1-5a05-4d19-84d4-afc1c331f0e4" />
+<img width="1517" height="861" alt="image" src="https://github.com/user-attachments/assets/dbeec14a-cdf5-4de1-a793-36b9f86f5097" />
 
 
 ---
@@ -93,7 +90,7 @@ Composto pelos seguintes serviços:
 - **Spring Cloud** (para microsserviços)
 - **Spring Cloud Function** (para serverless)
 - **Docker** (deploy)
-- **Mensageria:** Em análise
+- **Mensageria:** RabbitMQ
 - **Banco de Dados:** PostgreSQL
 - **Monitoramento:** Prometheus, Grafana, Datadog*
 

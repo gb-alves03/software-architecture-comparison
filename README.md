@@ -54,6 +54,14 @@ Composto pelos seguintes serviços:
 
 ---
 
+<img width="809" height="511" alt="image" src="https://github.com/user-attachments/assets/e78ffed4-d430-409c-ba2f-8107c6dc8628" />
+
+<img width="778" height="853" alt="image" src="https://github.com/user-attachments/assets/e5b9690b-7e2a-4b36-853f-33c2cdaae888" />
+
+<img width="1002" height="874" alt="image" src="https://github.com/user-attachments/assets/ed9ee5c6-4c09-45ce-8170-8ce0971baf41" />
+
+---
+
 ## 📂 Estrutura do Repositório
 
 /banking-app-monolith

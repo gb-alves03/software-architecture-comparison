@@ -55,7 +55,7 @@ Composto pelos seguintes serviços:
 
 <img width="778" height="853" alt="image" src="https://github.com/user-attachments/assets/e5b9690b-7e2a-4b36-853f-33c2cdaae888" />
 
-<img width="1002" height="874" alt="image" src="https://github.com/user-attachments/assets/ed9ee5c6-4c09-45ce-8170-8ce0971baf41" />
+<img width="1023" height="884" alt="image" src="https://github.com/user-attachments/assets/87005bd4-90c1-487a-8884-2abc7a03e0e5" />
 
 ---
 
@@ -66,11 +66,8 @@ Composto pelos seguintes serviços:
 
 /banking-app-microservices
 - /account-service
-- /transaction-service
 - /payment-service
-- /owner-service
-- /gateway-service
-- /discovery-service
+- /notification-service
 
 /banking-app-serverless 
 - Projeto serverless

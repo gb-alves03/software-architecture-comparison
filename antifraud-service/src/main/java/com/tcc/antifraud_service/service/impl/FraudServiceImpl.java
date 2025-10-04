@@ -5,12 +5,14 @@ import com.tcc.antifraud_service.dto.FraudResponse;
 import com.tcc.antifraud_service.repository.FraudRepository;
 import com.tcc.antifraud_service.repository.mongo.FraudCheckDocument;
 import com.tcc.antifraud_service.service.FraudService;
+import com.tcc.antifraud_service.service.strategy.FraudRule;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,23 +23,24 @@ public class FraudServiceImpl implements FraudService {
     private final StringRedisTemplate redisTemplate;
     private final Counter approvedCounter;
     private final Counter rejectedCounter;
+    private final List<FraudRule> fraudRules;
 
     public FraudServiceImpl(FraudRepository repository,
                             StringRedisTemplate redisTemplate,
-                            MeterRegistry meterRegistry) {
+                            MeterRegistry meterRegistry,
+                            List<FraudRule> fraudRules) {
         this.repository = repository;
         this.redisTemplate = redisTemplate;
         this.approvedCounter = meterRegistry.counter("fraud.approved");
         this.rejectedCounter = meterRegistry.counter("fraud.rejected");
-
+        this.fraudRules = fraudRules;
     }
 
     @Override
     public FraudResponse validate(FraudRequest request) {
-        String key = "txn:" + request.sourceAccount();
-        final var defaultResponse = new FraudResponse(request.transactionId(), false, "Transação autorizada!");
-
+        String key = "txn:" + request.accountId();
         Long attempts;
+
         try {
             attempts = redisTemplate.opsForValue().increment(key);
             redisTemplate.expire(key, Duration.ofMinutes(2));
@@ -46,14 +49,25 @@ public class FraudServiceImpl implements FraudService {
         }
 
 
-        FraudResponse response = getFraudResponse(request, attempts, defaultResponse);
+        Long finalAttempts = attempts;
+        FraudResponse response = fraudRules.stream()
+                        .map(rule -> rule.apply(request, finalAttempts))
+                                .filter(Optional::isPresent)
+                                        .map(Optional::get)
+                                                .findFirst()
+                                                        .orElse(new FraudResponse(
+                                                                request.transactionId(),
+                                                                false,
+                                                                "Transação autorizada!"
+                                                        ));
 
         repository.save(new FraudCheckDocument(
                 UUID.randomUUID().toString(),
-                request.sourceAccount(),
+                request.accountId(),
                 request.amount(),
                 request.transactionType(),
-                response.fraudulent()
+                response.fraudulent(),
+                response.reason()
         ));
 
         if (response.fraudulent()) {
@@ -64,19 +78,4 @@ public class FraudServiceImpl implements FraudService {
         return response;
     }
 
-    private static FraudResponse getFraudResponse(FraudRequest request, Long attempts, FraudResponse defaultResponse) {
-        FraudResponse response;
-
-        if (attempts != null && attempts > 3) {
-            response =  new FraudResponse(request.transactionId(), true, "Muitas tentativas em pouco tempo");
-        } else if (request.amount().doubleValue() > 10000) {
-            response = new FraudResponse(request.transactionId(), true, "Transação acima do limite permitido.");
-        } else if ("TRANSFER".equals(request.transactionType()) &&
-        request.sourceAccount().equals(request.destinationAccount())) {
-            response =  new FraudResponse(request.transactionId(), true, "Transferência entre mesma conta!");
-        } else {
-            response = defaultResponse;
-        }
-        return response;
-    }
 }

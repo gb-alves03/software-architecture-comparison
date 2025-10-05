@@ -3,9 +3,9 @@ package com.architecture.account_service.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.architecture.account_service.model.Owner;
+import com.architecture.account_service.model.Transaction;
 
 @Repository
-public interface OwnerRepository extends JpaRepository<Owner, Long> {
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
 }

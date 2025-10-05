@@ -1,5 +1,5 @@
 package com.architecture.account_service.enumeration;
 
 public enum TransactionType {
-    TRANSFER, DEPOSIT, WITHDRAWAL, PAYMENT
+    TRANSFER, DEPOSIT, WITHDRAWAL, CREDIT, DEBIT, BANK_SLIP
 }

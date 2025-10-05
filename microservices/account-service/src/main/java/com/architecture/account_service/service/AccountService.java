@@ -1,89 +1,19 @@
 package com.architecture.account_service.service;
 
-import java.math.BigDecimal;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.architecture.account_service.dto.CreditDTO;
-import com.architecture.account_service.dto.DebitDTO;
-import com.architecture.account_service.dto.ProfileDTO;
+import com.architecture.account_service.dto.DepositDTO;
+import com.architecture.account_service.dto.PaymentDTO;
 import com.architecture.account_service.dto.RegisterDTO;
-import com.architecture.account_service.model.Account;
-import com.architecture.account_service.model.Owner;
-import com.architecture.account_service.repository.AccountRepository;
-import com.architecture.account_service.repository.OwnerRepository;
+import com.architecture.account_service.dto.TransferDTO;
+import com.architecture.account_service.dto.WithdrawalDTO;
 
-@Service
-public class AccountService {
+public interface AccountService {
+    public void register(RegisterDTO.Input input);
 
-    private final AccountRepository accountRepository;
-    private final OwnerRepository ownerRepository;
+    public void transfer(TransferDTO.Input input);
 
-    public AccountService(AccountRepository accountRepository, OwnerRepository ownerRepository) {
-        this.accountRepository = accountRepository;
-        this.ownerRepository = ownerRepository;
-    }
+    public void deposit(DepositDTO.Input input);
 
-    @Transactional
-    public void register(RegisterDTO.Input input) {
-        Owner owner = new Owner();
-        owner.setName(input.name());
-        owner.setEmail(input.email());
-        owner.setPhone(input.phone());
-        owner.validate();
+    public void withdrawal(WithdrawalDTO.Input input);
 
-        Account account = new Account();
-        account.setOwner(owner);
-        account.setBalance(BigDecimal.ZERO);
-        account.validate();
-
-        ownerRepository.save(owner);
-        accountRepository.save(account);
-    }
-
-    @Transactional
-    public void debit(DebitDTO.Input input) {
-        Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-        BigDecimal amount = input.amount();
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Amount must be greather than zero");
-        }
-        if (account.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient balance");
-        }
-        account.setBalance(account.getBalance().subtract(amount));
-        this.accountRepository.save(account);
-    }
-
-    @Transactional
-    public void credit(CreditDTO.Input input) {
-        Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-        BigDecimal amount = input.amount();
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Amount must be greather than zero");
-        }
-        account.setBalance(account.getBalance().add(amount));
-        this.accountRepository.save(account);
-    }
-
-    public ProfileDTO.Output findAccountById(ProfileDTO.Input input) {
-        Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        AccountDetails accountDetails = (AccountDetails) authentication.getPrincipal();
-        Long loggedAccountId = accountDetails.getAccountId();
-
-        if (!account.getAccountId().equals(loggedAccountId)) {
-            throw new RuntimeException("Access denied");
-        }
-
-        return new ProfileDTO.Output(account.getAccountId(), account.getBalance(), account.getOwner().getName(),
-                account.getOwner().getEmail(), account.getOwner().getPhone());
-    }
+    public void payment(PaymentDTO.Input input);
 }

@@ -1,66 +1,22 @@
 package com.architecture.account_service.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.architecture.account_service.dto.CreditDTO;
-import com.architecture.account_service.dto.DebitDTO;
-import com.architecture.account_service.dto.ProfileDTO;
+import com.architecture.account_service.dto.DepositDTO;
+import com.architecture.account_service.dto.PaymentDTO;
 import com.architecture.account_service.dto.RegisterDTO;
-import com.architecture.account_service.service.AccountService;
+import com.architecture.account_service.dto.TransferDTO;
+import com.architecture.account_service.dto.WithdrawalDTO;
 
-@RestController
-@RequestMapping("/v1/accounts")
-public class AccountController {
-    private final AccountService accountService;
+public interface AccountController {
+    public ResponseEntity<String> register(@RequestBody RegisterDTO.Input input);
 
-    public AccountController(AccountService accountService) {
-        this.accountService = accountService;
-    }
+    public ResponseEntity<String> transfer(@RequestBody TransferDTO.Input input);
 
-    @PostMapping
-    public ResponseEntity<String> register(@RequestBody RegisterDTO.Input input) {
-        try {
-            this.accountService.register(input);
-            return ResponseEntity.status(HttpStatus.OK).body("");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
-        }
-    }
+    public ResponseEntity<String> deposit(@RequestBody DepositDTO.Input input);
 
-    @PostMapping("/debit")
-    public ResponseEntity<String> debit(@RequestBody DebitDTO.Input input) {
-        try {
-            this.accountService.debit(input);
-            return ResponseEntity.status(HttpStatus.OK).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
-        }
-    }
+    public ResponseEntity<String> withdrawal(@RequestBody WithdrawalDTO.Input input);
 
-    @PostMapping("/credit")
-    public ResponseEntity<String> credit(@RequestBody CreditDTO.Input input) {
-        try {
-            this.accountService.credit(input);
-            return ResponseEntity.status(HttpStatus.OK).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/{accountId}")
-    public ResponseEntity<?> findAccountById(@PathVariable Long accountId) {
-        try {
-            ProfileDTO.Output output = this.accountService.findAccountById(new ProfileDTO.Input(accountId));
-            return ResponseEntity.status(HttpStatus.OK).body(output);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
-        }
-    }
+    public ResponseEntity<String> payment(@RequestBody PaymentDTO.Input input);
 }

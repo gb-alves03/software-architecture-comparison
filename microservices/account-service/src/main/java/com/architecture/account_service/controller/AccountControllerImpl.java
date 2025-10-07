@@ -36,8 +36,12 @@ public class AccountControllerImpl implements AccountController {
     @PostMapping("/transactions/deposit")
     @Override
     public ResponseEntity<String> deposit(DepositDTO.Input input) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            this.accountService.deposit(input);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch(Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
+        }
     }
 
     @PostMapping("/payments")

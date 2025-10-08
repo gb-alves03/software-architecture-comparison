@@ -27,9 +27,9 @@ public class AccountControllerImpl implements AccountController {
     public ResponseEntity<String> register(RegisterDTO.Input input) {
         try {
             this.accountService.register(input);
-            return ResponseEntity.status(HttpStatus.OK).body("");
+            return ResponseEntity.status(HttpStatus.OK).build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
     }
 
@@ -39,8 +39,8 @@ public class AccountControllerImpl implements AccountController {
         try {
             this.accountService.deposit(input);
             return ResponseEntity.status(HttpStatus.OK).build();
-        } catch(Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
     }
 
@@ -54,15 +54,23 @@ public class AccountControllerImpl implements AccountController {
     @PostMapping("/transactions/transfer")
     @Override
     public ResponseEntity<String> transfer(TransferDTO.Input input) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            this.accountService.transfer(input);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
     }
 
     @PostMapping("/transactions/withdrawal")
     @Override
     public ResponseEntity<String> withdrawal(WithdrawalDTO.Input input) {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            this.accountService.withdrawal(input);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
     }
 
 }

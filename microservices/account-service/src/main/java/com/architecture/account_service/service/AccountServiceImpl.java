@@ -43,26 +43,26 @@ public class AccountServiceImpl implements AccountService {
         }
         Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
-        
+
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
         transaction.setFrom(account);
         transaction.setTo(account);
         transaction.setStatus(TransactionStatus.PENDING);
         transaction.setAmount(input.amount());
-        
+
         this.transactionRepository.save(transaction);
 
         try {
             account.setBalance(account.getBalance().add(input.amount()));
             this.accountRepository.save(account);
-            
+
             transaction.setStatus(TransactionStatus.SUCCESS);
-            this.transactionRepository.save(transaction);
         } catch (Exception e) {
             transaction.setStatus(TransactionStatus.FAILED);
-            this.transactionRepository.save(transaction);
             throw new RuntimeException(e.getMessage());
+        } finally {
+            this.transactionRepository.save(transaction);
         }
     }
 
@@ -103,15 +103,33 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         Account to = this.accountRepository.findById(input.to())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
-        
+
         if (from.getBalance().compareTo(input.amount()) < 0) {
             throw new RuntimeException("Insufficient balance");
         }
-        
-        from.setBalance(from.getBalance().subtract(input.amount()));
-        to.setBalance(to.getBalance().add(input.amount()));
-        this.accountRepository.save(from);
-        this.accountRepository.save(to);
+
+        Transaction transaction = new Transaction();
+        transaction.setType(TransactionType.TRANSFER);
+        transaction.setFrom(from);
+        transaction.setTo(to);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setAmount(input.amount());
+
+        this.transactionRepository.save(transaction);
+
+        try {
+            from.setBalance(from.getBalance().subtract(input.amount()));
+            to.setBalance(to.getBalance().add(input.amount()));
+            this.accountRepository.save(from);
+            this.accountRepository.save(to);
+
+            transaction.setStatus(TransactionStatus.SUCCESS);
+        } catch (Exception e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            throw new RuntimeException(e.getMessage());
+        } finally {
+            this.transactionRepository.save(transaction);
+        }
     }
 
     @Transactional
@@ -125,13 +143,30 @@ public class AccountServiceImpl implements AccountService {
         }
         Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
-        
+
         if (account.getBalance().compareTo(input.amount()) < 0) {
             throw new RuntimeException("Insufficient balance");
         }
-        
-        account.setBalance(account.getBalance().subtract(input.amount()));
-        this.accountRepository.save(account);
-    }
 
+        Transaction transaction = new Transaction();
+        transaction.setType(TransactionType.WITHDRAWAL);
+        transaction.setFrom(account);
+        transaction.setTo(account);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setAmount(input.amount());
+
+        this.transactionRepository.save(transaction);
+
+        try {
+            account.setBalance(account.getBalance().subtract(input.amount()));
+            this.accountRepository.save(account);
+
+            transaction.setStatus(TransactionStatus.SUCCESS);
+        } catch (Exception e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            throw new RuntimeException(e.getMessage());
+        } finally {
+            this.transactionRepository.save(transaction);
+        }
+    }
 }

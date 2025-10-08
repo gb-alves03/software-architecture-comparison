@@ -12,6 +12,7 @@ import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
+import com.architecture.account_service.http.AntiFraudService;
 import com.architecture.account_service.model.Account;
 import com.architecture.account_service.model.Owner;
 import com.architecture.account_service.model.Transaction;
@@ -25,11 +26,13 @@ public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final OwnerRepository ownerRepository;
     private final TransactionRepository transactionRepository;
+    private final AntiFraudService antiFraudService;
 
-    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository) {
+    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, AntiFraudService antiFraudService) {
         this.accountRepository = accountRepository;
         this.ownerRepository = ownerRepository;
         this.transactionRepository = transactionRepository;
+        this.antiFraudService = antiFraudService;
     }
 
     @Transactional
@@ -115,7 +118,15 @@ public class AccountServiceImpl implements AccountService {
         transaction.setStatus(TransactionStatus.PENDING);
         transaction.setAmount(input.amount());
 
-        this.transactionRepository.save(transaction);
+        transaction = this.transactionRepository.save(transaction);
+
+        boolean fraudulent = antiFraudService.isFraudulent(transaction);
+
+        if (fraudulent) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new RuntimeException("Transaction failed");
+        }
 
         try {
             from.setBalance(from.getBalance().subtract(input.amount()));

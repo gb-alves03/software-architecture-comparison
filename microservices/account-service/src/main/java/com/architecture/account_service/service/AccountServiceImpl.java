@@ -13,6 +13,7 @@ import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
 import com.architecture.account_service.http.AntiFraudService;
+import com.architecture.account_service.http.NotificationService;
 import com.architecture.account_service.model.Account;
 import com.architecture.account_service.model.Owner;
 import com.architecture.account_service.model.Transaction;
@@ -27,12 +28,14 @@ public class AccountServiceImpl implements AccountService {
     private final OwnerRepository ownerRepository;
     private final TransactionRepository transactionRepository;
     private final AntiFraudService antiFraudService;
+    private final NotificationService notificationService;
 
-    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, AntiFraudService antiFraudService) {
+    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, AntiFraudService antiFraudService, NotificationService notificationService) {
         this.accountRepository = accountRepository;
         this.ownerRepository = ownerRepository;
         this.transactionRepository = transactionRepository;
         this.antiFraudService = antiFraudService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -61,6 +64,8 @@ public class AccountServiceImpl implements AccountService {
             this.accountRepository.save(account);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
+
+            this.notificationService.sendNotification(transaction);
         } catch (Exception e) {
             transaction.setStatus(TransactionStatus.FAILED);
             throw new RuntimeException(e.getMessage());
@@ -135,6 +140,8 @@ public class AccountServiceImpl implements AccountService {
             this.accountRepository.save(to);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
+
+            this.notificationService.sendNotification(transaction);
         } catch (Exception e) {
             transaction.setStatus(TransactionStatus.FAILED);
             throw new RuntimeException(e.getMessage());
@@ -173,6 +180,8 @@ public class AccountServiceImpl implements AccountService {
             this.accountRepository.save(account);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
+
+            this.notificationService.sendNotification(transaction);
         } catch (Exception e) {
             transaction.setStatus(TransactionStatus.FAILED);
             throw new RuntimeException(e.getMessage());

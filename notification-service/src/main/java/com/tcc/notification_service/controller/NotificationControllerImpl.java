@@ -2,10 +2,15 @@ package com.tcc.notification_service.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.tcc.notification_service.dto.NotificationDTO;
 import com.tcc.notification_service.service.NotificationService;
 
+@RestController
+@RequestMapping("/v1/notification")
 public class NotificationControllerImpl implements NotificationController {
 
     private final NotificationService notificationService;
@@ -14,6 +19,7 @@ public class NotificationControllerImpl implements NotificationController {
         this.notificationService = notificationService;
     }
 
+    @PostMapping("/stable")
     @Override
     public ResponseEntity<Void> notify(NotificationDTO.Input input) {
         try {
@@ -24,6 +30,7 @@ public class NotificationControllerImpl implements NotificationController {
         }
     }
 
+    @PostMapping("/unstable")
     @Override
     public ResponseEntity<Void> unstableNotify(NotificationDTO.Input input) {
         try {

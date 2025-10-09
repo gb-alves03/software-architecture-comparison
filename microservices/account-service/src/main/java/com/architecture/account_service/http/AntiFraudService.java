@@ -10,12 +10,12 @@ import com.architecture.account_service.model.Transaction;
 @Component
 public class AntiFraudService {
 
-    private final WebClient webClient;
+    private final WebClient http;
     @Value("${antifraud.url}")
     private String antiFraudUrl;
 
-    public AntiFraudService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
+    public AntiFraudService(WebClient.Builder http) {
+        this.http = http.build();
     }
 
     public boolean isFraudulent(Transaction transaction) {
@@ -24,7 +24,7 @@ public class AntiFraudService {
                     transaction.getAmount(), transaction.getType().toString(),
                     "" + transaction.getFrom().getAccountId());
 
-            AntiFraudDTO.Response response = webClient.post().uri(antiFraudUrl + "/v1/fraud/validate")
+            AntiFraudDTO.Response response = http.post().uri(antiFraudUrl + "/v1/fraud/validate")
                     .bodyValue(request).retrieve().bodyToMono(AntiFraudDTO.Response.class).block();
 
             return response != null && response.fraudulent();

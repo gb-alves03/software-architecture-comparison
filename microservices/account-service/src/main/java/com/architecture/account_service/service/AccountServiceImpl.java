@@ -12,11 +12,13 @@ import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
+import com.architecture.account_service.events.PaymentDone;
 import com.architecture.account_service.http.AntiFraudService;
 import com.architecture.account_service.http.NotificationService;
 import com.architecture.account_service.model.Account;
 import com.architecture.account_service.model.Owner;
 import com.architecture.account_service.model.Transaction;
+import com.architecture.account_service.queue.RabbitMQ;
 import com.architecture.account_service.repository.AccountRepository;
 import com.architecture.account_service.repository.OwnerRepository;
 import com.architecture.account_service.repository.TransactionRepository;
@@ -29,13 +31,15 @@ public class AccountServiceImpl implements AccountService {
     private final TransactionRepository transactionRepository;
     private final AntiFraudService antiFraudService;
     private final NotificationService notificationService;
+    private final RabbitMQ queue;
 
-    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, AntiFraudService antiFraudService, NotificationService notificationService) {
+    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, AntiFraudService antiFraudService, NotificationService notificationService, RabbitMQ queue) {
         this.accountRepository = accountRepository;
         this.ownerRepository = ownerRepository;
         this.transactionRepository = transactionRepository;
         this.antiFraudService = antiFraudService;
         this.notificationService = notificationService;
+        this.queue = queue;
     }
 
     @Transactional
@@ -76,7 +80,50 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void payment(PaymentDTO.Input input) {
-        // TODO Auto-generated method stub
+        if (input == null || input.from() == null || input.to() == null || input.amount() == null) {
+            throw new RuntimeException("Transper input, from, to and amount cannot be null");
+        }
+        if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Transfer amount must be greater than zero");
+        }
+        Account from = this.accountRepository.findById(input.from())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+        Account to = this.accountRepository.findById(input.to())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (input.type() == TransactionType.DEBIT) {
+            if (from.getBalance().compareTo(input.amount()) < 0) {
+                throw new RuntimeException("Insufficient balance");
+            }
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setType(input.type());
+        transaction.setFrom(from);
+        transaction.setTo(to);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setAmount(input.amount());
+
+        transaction = this.transactionRepository.save(transaction);
+
+        try {
+            from.setBalance(from.getBalance().subtract(input.amount()));
+            to.setBalance(to.getBalance().add(input.amount()));
+            this.accountRepository.save(from);
+            this.accountRepository.save(to);
+
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            this.transactionRepository.save(transaction);
+
+            PaymentDone event = new PaymentDone(from, to, input.amount(), input.type());
+            this.queue.send(null, null, event);
+
+            this.notificationService.sendNotification(transaction);
+        } catch (Exception e) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            this.transactionRepository.save(transaction);
+            throw new RuntimeException("Payment failed: " + e.getMessage());
+        }
 
     }
 

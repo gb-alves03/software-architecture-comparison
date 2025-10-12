@@ -15,7 +15,7 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long accountId;
-    @Column(name = "balance", nullable = false)
+    @Column(name = "balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", referencedColumnName = "ownerId")

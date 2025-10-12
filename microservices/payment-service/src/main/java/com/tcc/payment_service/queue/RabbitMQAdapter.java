@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
 @Component
 public class RabbitMQAdapter implements Queue {
     @Value("${rabbitmq.host}")
@@ -26,21 +29,15 @@ public class RabbitMQAdapter implements Queue {
     private Channel channel;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public RabbitMQAdapter(String host, int port, String username, String password) {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-    }
-
-    @Override
-    public void connect() {
+    private void connect() {
         try {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(host);
             factory.setPort(port);
             factory.setUsername(username);
             factory.setPassword(password);
+            factory.setAutomaticRecoveryEnabled(true);
+            factory.setNetworkRecoveryInterval(5000);
             this.connection = factory.newConnection();
             this.channel = connection.createChannel();
         } catch (IOException | TimeoutException e) {
@@ -48,8 +45,7 @@ public class RabbitMQAdapter implements Queue {
         }
     }
 
-    @Override
-    public void close() {
+    private void close() {
         try {
             if (channel != null && channel.isOpen())
                 channel.close();
@@ -61,10 +57,10 @@ public class RabbitMQAdapter implements Queue {
     }
 
     @Override
-    public void publish(String exchange, Object data) {
+    public void publish(String exchange, String routingKey, Object data) {
         try {
             String message = objectMapper.writeValueAsString(data);
-            channel.basicPublish(exchange, "", null, message.getBytes(StandardCharsets.UTF_8));
+            channel.basicPublish(exchange, routingKey, null, message.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException("Failed to publish message: " + e.getMessage());
         }
@@ -83,4 +79,40 @@ public class RabbitMQAdapter implements Queue {
         }
     }
 
+    @Override
+    public void createExchange(String exchange, String type) {
+        try {
+            channel.exchangeDeclare(exchange, type, true);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create exchange: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void createQueue(String queue) {
+        try {
+            channel.queueDeclare(queue, true, false, false, null);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create queue: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void bindingQueue(String queue, String exchange, String routingKey) {
+        try {
+            channel.queueBind(queue, exchange, routingKey);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to bind queue: " + e.getMessage());
+        }
+    }
+
+    @PostConstruct
+    public void init() {
+        connect();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        close();
+    }
 }

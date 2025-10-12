@@ -7,5 +7,4 @@ import com.architecture.account_service.model.Transaction;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-
 }

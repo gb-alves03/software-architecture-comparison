@@ -29,20 +29,15 @@ public class NotificationService {
             if (transaction.getType() == TransactionType.TRANSFER) {
                 NotificationDTO.Request requestTo = new NotificationDTO.Request(transaction.getTo().getAccountId(),
                         "Transaction success: " + transaction.getTransactionId());
-                
+
                 send(requestTo);
             }
         } catch (Exception e) {
             throw new RuntimeException("Notification failed: " + e.getMessage());
         }
     }
-    
+
     private void send(NotificationDTO.Request request) {
-        this.http.post()
-            .uri("/v1/notification/stable")
-            .bodyValue(request)
-            .retrieve()
-            .bodyToMono(Void.class)
-            .block();
+        this.http.post().uri("/v1/notification/stable").bodyValue(request).retrieve().bodyToMono(Void.class).block();
     }
 }

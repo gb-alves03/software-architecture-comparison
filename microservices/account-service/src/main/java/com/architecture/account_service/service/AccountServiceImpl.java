@@ -80,45 +80,33 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void payment(PaymentDTO.Input input) {
-        if (input == null || input.from() == null || input.to() == null || input.amount() == null) {
-            throw new RuntimeException("Transper input, from, to and amount cannot be null");
+        if (input == null || input.accountId() == null || input.amount() == null || input.transactionType() == null) {
+            throw new RuntimeException("Payment input, accountId, amount and transactionType cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Transfer amount must be greater than zero");
+            throw new RuntimeException("Payment amount must be greater than zero");
         }
-        Account from = this.accountRepository.findById(input.from())
+        Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
-        Account to = this.accountRepository.findById(input.to())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        if (input.type() == TransactionType.DEBIT) {
-            if (from.getBalance().compareTo(input.amount()) < 0) {
-                throw new RuntimeException("Insufficient balance");
-            }
-        }
 
         Transaction transaction = new Transaction();
-        transaction.setType(input.type());
-        transaction.setFrom(from);
-        transaction.setTo(to);
+        transaction.setType(input.transactionType());
+        transaction.setFrom(account);
+        transaction.setTo(account);
         transaction.setStatus(TransactionStatus.PENDING);
         transaction.setAmount(input.amount());
 
         transaction = this.transactionRepository.save(transaction);
 
         try {
-            from.setBalance(from.getBalance().subtract(input.amount()));
-            to.setBalance(to.getBalance().add(input.amount()));
-            this.accountRepository.save(from);
-            this.accountRepository.save(to);
+            processPayment(account, input);
+            this.accountRepository.save(account);
+
+            PaymentDone event = new PaymentDone(account, input.amount(), input.transactionType());
+            this.queue.send(null, null, event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
             this.transactionRepository.save(transaction);
-
-            PaymentDone event = new PaymentDone(from, to, input.amount(), input.type());
-            this.queue.send(null, null, event);
-
-            this.notificationService.sendNotification(transaction);
         } catch (Exception e) {
             transaction.setStatus(TransactionStatus.FAILED);
             this.transactionRepository.save(transaction);
@@ -234,6 +222,27 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException(e.getMessage());
         } finally {
             this.transactionRepository.save(transaction);
+        }
+    }
+
+    private void processPayment(Account account, PaymentDTO.Input input) {
+        switch (input.transactionType()) {
+        case DEBIT:
+            if (account.getBalance().compareTo(input.amount()) < 0) {
+                throw new RuntimeException("Insufficient balance for debit transaction");
+            }
+            account.setBalance(account.getBalance().subtract(input.amount()));
+            break;
+        case CREDIT:
+            break;
+        case BANK_SLIP:
+            if (account.getBalance().compareTo(input.amount()) < 0) {
+                throw new RuntimeException("Insufficient balance for bank slip transaction");
+            }
+            account.setBalance(account.getBalance().subtract(input.amount()));
+            break;
+        default:
+            throw new RuntimeException("Transaction type not supported");
         }
     }
 }

@@ -7,5 +7,4 @@ import com.architecture.account_service.model.Account;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
-
 }

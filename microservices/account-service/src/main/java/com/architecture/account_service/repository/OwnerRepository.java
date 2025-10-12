@@ -7,5 +7,4 @@ import com.architecture.account_service.model.Owner;
 
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, Long> {
-
 }

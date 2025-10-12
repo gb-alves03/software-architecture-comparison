@@ -6,33 +6,22 @@ import com.architecture.account_service.enumeration.TransactionType;
 import com.architecture.account_service.model.Account;
 
 public class PaymentDone {
-    private static final String event = "paymentDone";
-    private Account from = null;
-    private Account to = null;
+    private Account account;
     private BigDecimal amount;
     private TransactionType type;
 
-    public PaymentDone(Account from, Account to, BigDecimal amount, TransactionType type) {
-        this.from = from;
-        this.to = to;
+    public PaymentDone(Account account, BigDecimal amount, TransactionType type) {
+        this.account = account;
         this.amount = amount;
         this.type = type;
     }
 
-    public Account getFrom() {
-        return from;
+    public Account getAccount() {
+        return account;
     }
 
-    public void setFrom(Account from) {
-        this.from = from;
-    }
-
-    public Account getTo() {
-        return to;
-    }
-
-    public void setTo(Account to) {
-        this.to = to;
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     public BigDecimal getAmount() {

@@ -24,8 +24,8 @@ public class AntiFraudService {
                     transaction.getAmount(), transaction.getType().toString(),
                     "" + transaction.getFrom().getAccountId());
 
-            AntiFraudDTO.Response response = http.post().uri(antiFraudUrl + "/v1/fraud/validate")
-                    .bodyValue(request).retrieve().bodyToMono(AntiFraudDTO.Response.class).block();
+            AntiFraudDTO.Response response = http.post().uri(antiFraudUrl + "/v1/fraud/validate").bodyValue(request)
+                    .retrieve().bodyToMono(AntiFraudDTO.Response.class).block();
 
             return response != null && response.fraudulent();
         } catch (Exception e) {

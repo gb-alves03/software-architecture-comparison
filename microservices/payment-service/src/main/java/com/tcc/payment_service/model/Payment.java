@@ -21,7 +21,7 @@ public class Payment {
     @Column(name = "accountId", nullable = false)
     private long accountId;
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "pstatus", nullable = false)
     private PaymentStatus status;
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;

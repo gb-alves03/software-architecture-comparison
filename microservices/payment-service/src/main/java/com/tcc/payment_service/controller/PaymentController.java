@@ -28,8 +28,6 @@ public class PaymentController {
                 PaymentDTO.Input payment = objectMapper.readValue(message, PaymentDTO.Input.class);
                 this.paymentService.processPayment(payment);
             } catch (Exception e) {
-                // Exemplo de ação compensatória
-                // queue.publish("payment.events", "payment.failed", message);
             }
             return null;
         });

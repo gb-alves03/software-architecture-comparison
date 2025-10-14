@@ -3,6 +3,7 @@ package com.tcc.payment_service.model;
 import java.math.BigDecimal;
 
 import com.tcc.payment_service.enumeration.PaymentStatus;
+import com.tcc.payment_service.enumeration.PaymentType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,17 +18,15 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long paymentId;
-    @Column(name = "account_from", nullable = false)
-    private long from;
-    @Column(name = "account_to", nullable = false)
-    private long to;
+    @Column(name = "accountId", nullable = false)
+    private long accountId;
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private PaymentStatus status;
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
     @Column(name = "type", nullable = false)
-    private String paymentType;
+    private PaymentType paymentType;
 
     public long getPaymentId() {
         return paymentId;
@@ -37,20 +36,12 @@ public class Payment {
         this.paymentId = paymentId;
     }
 
-    public long getFrom() {
-        return from;
+    public long getAccountId() {
+        return accountId;
     }
 
-    public void setFrom(long from) {
-        this.from = from;
-    }
-
-    public long getTo() {
-        return to;
-    }
-
-    public void setTo(long to) {
-        this.to = to;
+    public void setAccountId(long accountId) {
+        this.accountId = accountId;
     }
 
     public PaymentStatus getStatus() {
@@ -69,11 +60,11 @@ public class Payment {
         this.amount = amount;
     }
 
-    public String getPaymentType() {
+    public PaymentType getPaymentType() {
         return paymentType;
     }
 
-    public void setPaymentType(String paymentType) {
+    public void setPaymentType(PaymentType paymentType) {
         this.paymentType = paymentType;
     }
 }

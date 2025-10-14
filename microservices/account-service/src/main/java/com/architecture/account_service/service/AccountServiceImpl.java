@@ -102,7 +102,7 @@ public class AccountServiceImpl implements AccountService {
             processPayment(account, input);
             this.accountRepository.save(account);
 
-            PaymentDone event = new PaymentDone(account, input.amount(), input.transactionType());
+            PaymentDone event = new PaymentDone(account.getAccountId(), input.amount(), input.transactionType());
             this.queue.send(null, null, event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);

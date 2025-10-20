@@ -1,6 +1,7 @@
 package com.architecture.account_service.model;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,8 +10,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "accounts")
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +24,8 @@ public class Account {
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", referencedColumnName = "ownerId")
     private Owner owner;
+    @OneToMany(mappedBy = "account")
+    private List<Card> cards;
 
     public void validate() {
         if (owner == null) {
@@ -52,5 +58,13 @@ public class Account {
 
     public void setOwner(Owner owner) {
         this.owner = owner;
+    }
+
+    public List<Card> getCards() {
+        return cards;
+    }
+
+    public void setCards(List<Card> cards) {
+        this.cards = cards;
     }
 }

@@ -3,6 +3,7 @@ package com.tcc.banking_app_monolith.domain.entity;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "owners")
 public class Owner {
 
     @Id

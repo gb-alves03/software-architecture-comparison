@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
+@Table(name = "transactions")
 public class Transaction {
 
     @Id
@@ -27,6 +28,17 @@ public class Transaction {
     private TransactionStatus status;
     @Column(name = "amount", nullable = false)
     private BigDecimal amount;
+
+    public Transaction() {}
+
+    public Transaction(Long id, TransactionType type, Account from, Account to, TransactionStatus status, BigDecimal amount) {
+        this.id = id;
+        this.type = type;
+        this.from = from;
+        this.to = to;
+        this.status = status;
+        this.amount = amount;
+    }
 
     public Long getId() {
         return id;

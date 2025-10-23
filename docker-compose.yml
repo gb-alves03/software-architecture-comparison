@@ -1,6 +1,34 @@
 version: "4.0"
 
 services:
+
+  banking-app-monolith:
+    build:
+      context: ./monolith/banking-app-monolith
+    container_name: banking_app_monolith
+    depends_on:
+      - banking-monolith-database
+    ports:
+      - 8080:8080
+    networks:
+      - monolith-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://account-service-database:5432/banking_monolith_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  banking-monolith-database:
+    image: postgres:14.3-alpine
+    container_name: banking_monolith_database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: banking_monolith_db
+    ports:
+      - 5434:5432
+    networks:
+      - monolith-network
+
   account-service-api:
     build:
       context: ./microservices/account-service
@@ -44,4 +72,6 @@ services:
 
 networks:
   microservice-network:
+    driver: bridge
+  monolith-network:
     driver: bridge

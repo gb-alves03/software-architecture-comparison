@@ -87,6 +87,7 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Transactional
     @Override
     public void payment(PaymentDTO.Input input) {
         if (input == null || input.accountId() == null || input.amount() == null || input.transactionType() == null) {
@@ -255,23 +256,20 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private Card generateNewCard(Account account, CardType type, BigDecimal limit) {
-        for (int attempt = 1; attempt <= 3; attempt++) {
+        while(true) {
             String number = generateCardNumber();
             String cvv = generateCvv();
 
-            if (this.cardRepository.existsCardNumber(number)) {
-                continue;
+            if (!this.cardRepository.existsCardNumber(number)) {
+                Card card = new Card();
+                card.setNumber(number);
+                card.setCvv(cvv);
+                card.setType(type);
+                card.setAccount(account);
+                card.setCreditLimit(limit);
+                return card;
             }
-
-            Card card = new Card();
-            card.setNumber(number);
-            card.setCvv(cvv);
-            card.setType(type);
-            card.setAccount(account);
-            card.setCreditLimit(limit);
-            return card;
         }
-        throw new RuntimeException("Error generate unique card number");
     }
 
     private String generateCardNumber() {

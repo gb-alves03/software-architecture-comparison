@@ -72,9 +72,4 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStatus(PaymentStatus.SUCCESS);
         // Dispara evento para atualiza a transação do account service
     }
-
-    private void bankSlip(Payment payment) {
-        // Que tipo de regras teriamos aqui ?
-    }
-
 }

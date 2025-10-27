@@ -5,8 +5,11 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tcc.payment_service.queue.Queue;
 import com.tcc.payment_service.dto.PaymentDTO;
 import com.tcc.payment_service.enumeration.PaymentStatus;
+import com.tcc.payment_service.http.AntiFraudService;
+import com.tcc.payment_service.http.NotificationService;
 import com.tcc.payment_service.model.Payment;
 import com.tcc.payment_service.repository.PaymentRepository;
 
@@ -14,9 +17,15 @@ import com.tcc.payment_service.repository.PaymentRepository;
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
+    private final Queue queue;
+    private final AntiFraudService antiFraudService;
+    private final NotificationService notificationService;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, Queue queue, AntiFraudService antiFraudService, NotificationService notificationService) {
         this.paymentRepository = paymentRepository;
+        this.queue = queue;
+        this.antiFraudService = antiFraudService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -36,19 +45,19 @@ public class PaymentServiceImpl implements PaymentService {
             case DEBIT:
                 debit(payment);
                 break;
-            case BANK_SLIP:
-                bankSlip(payment);
-                break;
             default:
                 throw new RuntimeException();
             }
+            payment.setStatus(PaymentStatus.SUCCESS);
             this.paymentRepository.save(payment);
-            // Realiza a notificação
+            this.queue.publish("payment.exchange", "payment.processed", payment);
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             this.paymentRepository.save(payment);
-            // dispara o evento para atualizar a transaction do account service para FAILED
+            this.queue.publish("payment.exchange", "payment.failed", payment);
             throw e;
+        } finally {
+            this.notificationService.sendNotification(payment);
         }
 
     }
@@ -58,27 +67,14 @@ public class PaymentServiceImpl implements PaymentService {
             throw new RuntimeException();
         }
 
-        // validação do limite do cartão ?
-
-        // comunicação com o antifraud service
-
-        payment.setStatus(PaymentStatus.SUCCESS);
-        // Dispara evento para atualizar a transação do account service
+        if (this.antiFraudService.isFraudulent(payment)) {
+            throw new RuntimeException("Payment failed");
+        }
     }
 
     private void debit(Payment payment) {
         if (payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException();
         }
-
-        // validação do saldo da conta ?
-
-        payment.setStatus(PaymentStatus.SUCCESS);
-        // Dispara evento para atualiza a transação do account service
     }
-
-    private void bankSlip(Payment payment) {
-        // Que tipo de regras teriamos aqui ?
-    }
-
 }

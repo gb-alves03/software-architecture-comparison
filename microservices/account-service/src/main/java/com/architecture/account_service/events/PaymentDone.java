@@ -6,6 +6,8 @@ import com.architecture.account_service.enumeration.TransactionType;
 import com.architecture.account_service.model.Account;
 
 public class PaymentDone {
+    public static String queue = "payment.done.queue";
+    
     private Long accountId;
     private BigDecimal amount;
     private TransactionType type;

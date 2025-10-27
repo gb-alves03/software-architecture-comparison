@@ -3,6 +3,7 @@ package com.architecture.account_service.service;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,7 @@ import com.architecture.account_service.model.Account;
 import com.architecture.account_service.model.Card;
 import com.architecture.account_service.model.Owner;
 import com.architecture.account_service.model.Transaction;
-import com.architecture.account_service.queue.RabbitMQ;
+import com.architecture.account_service.queue.Queue;
 import com.architecture.account_service.repository.AccountRepository;
 import com.architecture.account_service.repository.CardRepository;
 import com.architecture.account_service.repository.OwnerRepository;
@@ -37,11 +38,11 @@ public class AccountServiceImpl implements AccountService {
     private final CardRepository cardRepository;
     private final AntiFraudService antiFraudService;
     private final NotificationService notificationService;
-    private final RabbitMQ queue;
+    private final Queue queue;
 
     private static final SecureRandom random = new SecureRandom();
 
-    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, CardRepository cardRepository, AntiFraudService antiFraudService, NotificationService notificationService, RabbitMQ queue) {
+    public AccountServiceImpl(AccountRepository accountRepository, OwnerRepository ownerRepository, TransactionRepository transactionRepository, CardRepository cardRepository, AntiFraudService antiFraudService, NotificationService notificationService, Queue queue) {
         this.accountRepository = accountRepository;
         this.ownerRepository = ownerRepository;
         this.transactionRepository = transactionRepository;
@@ -113,7 +114,7 @@ public class AccountServiceImpl implements AccountService {
             this.accountRepository.save(account);
 
             PaymentDone event = new PaymentDone(account.getAccountId(), input.amount(), input.transactionType());
-            this.queue.send(null, null, event);
+            this.queue.publish(PaymentDone.queue, null, event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
             this.transactionRepository.save(transaction);
@@ -249,6 +250,15 @@ public class AccountServiceImpl implements AccountService {
             account.setBalance(account.getBalance().subtract(input.amount()));
             break;
         case CREDIT:
+            List<Card> cards = account.getCards();
+
+            for (Card card : cards) {
+                if (card.getCreditLimit().compareTo(input.amount()) < 0) {
+                    throw new RuntimeException("Insufficient credit card limit for credit transaction");
+                }
+                card.setCreditLimit(card.getCreditLimit().subtract(input.amount()));
+                break;
+            }
             break;
         default:
             throw new RuntimeException("Transaction type not supported");
@@ -256,7 +266,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private Card generateNewCard(Account account, CardType type, BigDecimal limit) {
-        while(true) {
+        while (true) {
             String number = generateCardNumber();
             String cvv = generateCvv();
 

@@ -36,9 +36,6 @@ public class PaymentServiceImpl implements PaymentService {
             case DEBIT:
                 debit(payment);
                 break;
-            case BANK_SLIP:
-                bankSlip(payment);
-                break;
             default:
                 throw new RuntimeException();
             }
@@ -47,7 +44,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             this.paymentRepository.save(payment);
-            // dispara o evento para atualizar a transaction do account service para FAILED
             throw e;
         }
 

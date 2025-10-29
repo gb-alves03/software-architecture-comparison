@@ -13,7 +13,7 @@ services:
     networks:
       - monolith-network
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://account-service-database:5432/banking_monolith_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banking-monolith-database:5432/banking_monolith_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
@@ -75,3 +75,7 @@ networks:
     driver: bridge
   monolith-network:
     driver: bridge
+
+volumes:
+  rabbitmq_data:
+    driver: local

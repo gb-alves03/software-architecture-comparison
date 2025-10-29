@@ -1,7 +1,14 @@
 package com.tcc.banking_app_monolith.app.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.math.BigDecimal;
 
 public record TransferRequestDto(
-        Long from, Long to, BigDecimal amount
+        @NotNull(message = "Origin account ID cannot be null")
+        Long from,
+        @NotNull(message = "Target account ID cannot be null")
+        Long to,
+        @NotNull(message = "Amount cannot be null")
+        BigDecimal amount
 ) {}

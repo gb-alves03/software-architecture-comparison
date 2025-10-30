@@ -28,6 +28,7 @@ import com.architecture.account_service.repository.AccountRepository;
 import com.architecture.account_service.repository.CardRepository;
 import com.architecture.account_service.repository.OwnerRepository;
 import com.architecture.account_service.repository.TransactionRepository;
+import com.architecture.account_service.utils.Constants;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -59,10 +60,10 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Deposit input, amount, and accountId cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Deposit amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
         Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
@@ -95,10 +96,10 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Payment input, accountId, amount and transactionType cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Payment amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
         Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
         Transaction transaction = new Transaction();
         transaction.setType(input.transactionType());
@@ -156,15 +157,15 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Transper input, from, to and amount cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Transfer amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
         Account from = this.accountRepository.findById(input.from())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
         Account to = this.accountRepository.findById(input.to())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
         if (from.getBalance().compareTo(input.amount()) < 0) {
-            throw new RuntimeException("Insufficient balance");
+            throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
         }
 
         Transaction transaction = new Transaction();
@@ -181,7 +182,7 @@ public class AccountServiceImpl implements AccountService {
         if (fraudulent) {
             transaction.setStatus(TransactionStatus.FAILED);
             transactionRepository.save(transaction);
-            throw new RuntimeException("Transaction failed");
+            throw new RuntimeException(Constants.TRANSACTION_FAILED);
         }
 
         try {
@@ -208,13 +209,13 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Withdrawal input, amount, and accountId cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Withdrawal amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
         Account account = this.accountRepository.findById(input.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
         if (account.getBalance().compareTo(input.amount()) < 0) {
-            throw new RuntimeException("Insufficient balance");
+            throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
         }
 
         Transaction transaction = new Transaction();
@@ -245,7 +246,7 @@ public class AccountServiceImpl implements AccountService {
         switch (input.transactionType()) {
         case DEBIT:
             if (account.getBalance().compareTo(input.amount()) < 0) {
-                throw new RuntimeException("Insufficient balance for debit transaction");
+                throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
             }
             account.setBalance(account.getBalance().subtract(input.amount()));
             break;
@@ -254,14 +255,14 @@ public class AccountServiceImpl implements AccountService {
 
             for (Card card : cards) {
                 if (card.getCreditLimit().compareTo(input.amount()) < 0) {
-                    throw new RuntimeException("Insufficient credit card limit for credit transaction");
+                    throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
                 }
                 card.setCreditLimit(card.getCreditLimit().subtract(input.amount()));
                 break;
             }
             break;
         default:
-            throw new RuntimeException("Transaction type not supported");
+            throw new RuntimeException(Constants.TRANSACTION_TYPE_NOT_SUPPORTED);
         }
     }
 

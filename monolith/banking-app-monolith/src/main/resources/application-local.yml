@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: banking-app-monolith
+  datasource:
+    url: jdbc:postgresql://localhost:5434/banking_monolith_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+notification:
+  url:
+
+antifraud:
+  url:

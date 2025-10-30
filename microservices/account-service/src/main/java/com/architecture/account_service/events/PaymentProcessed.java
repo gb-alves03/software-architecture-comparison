@@ -5,14 +5,13 @@ import java.math.BigDecimal;
 import com.architecture.account_service.enumeration.TransactionType;
 import com.architecture.account_service.model.Account;
 
-public class PaymentDone {
-    public static String queue = "payment.done.queue";
+public class PaymentProcessed {
     
     private Long accountId;
     private BigDecimal amount;
     private TransactionType type;
 
-    public PaymentDone(Long accountId, BigDecimal amount, TransactionType type) {
+    public PaymentProcessed(Long accountId, BigDecimal amount, TransactionType type) {
         this.accountId = accountId;
         this.amount = amount;
         this.type = type;

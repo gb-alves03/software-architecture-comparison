@@ -16,7 +16,7 @@ import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.CardType;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
-import com.architecture.account_service.events.PaymentDone;
+import com.architecture.account_service.events.PaymentProcessed;
 import com.architecture.account_service.http.AntiFraudService;
 import com.architecture.account_service.http.NotificationService;
 import com.architecture.account_service.model.Account;
@@ -114,8 +114,8 @@ public class AccountServiceImpl implements AccountService {
             processPayment(account, input);
             this.accountRepository.save(account);
 
-            PaymentDone event = new PaymentDone(account.getAccountId(), input.amount(), input.transactionType());
-            this.queue.publish(PaymentDone.queue, null, event);
+            PaymentProcessed event = new PaymentProcessed(account.getAccountId(), input.amount(), input.transactionType());
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_PROCESSED_ROUTING_KEY, event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
             this.transactionRepository.save(transaction);

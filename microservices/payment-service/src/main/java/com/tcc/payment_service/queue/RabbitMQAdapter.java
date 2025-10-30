@@ -69,9 +69,16 @@ public class RabbitMQAdapter implements Queue {
     @Override
     public void consume(String queue, Function<String, Void> callback) {
         try {
-            channel.basicConsume(queue, true, (consumerTag, delivery) -> {
+            channel.basicConsume(queue, false, (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                callback.apply(message);
+
+                try {
+                    callback.apply(message);
+                    channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+                } catch (Exception e) {
+                    channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+                }
+
             }, consumerTag -> {
             });
         } catch (IOException e) {

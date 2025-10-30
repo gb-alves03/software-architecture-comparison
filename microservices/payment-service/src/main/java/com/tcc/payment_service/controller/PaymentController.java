@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tcc.payment_service.dto.PaymentDTO;
 import com.tcc.payment_service.queue.Queue;
 import com.tcc.payment_service.service.PaymentServiceImpl;
+import com.tcc.payment_service.utils.Constants;
 
 import jakarta.annotation.PostConstruct;
 
@@ -23,7 +24,7 @@ public class PaymentController {
 
     @PostConstruct
     public void init() {
-        this.queue.consume("payment.done.queue", message -> {
+        this.queue.consume(Constants.PAYMENT_PROCESSED_QUEUE, message -> {
             try {
                 PaymentDTO.Input payment = objectMapper.readValue(message, PaymentDTO.Input.class);
                 this.paymentService.processPayment(payment);

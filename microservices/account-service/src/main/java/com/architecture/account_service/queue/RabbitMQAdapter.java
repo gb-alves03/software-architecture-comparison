@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.architecture.account_service.utils.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 
@@ -69,9 +70,16 @@ public class RabbitMQAdapter implements Queue {
     @Override
     public void consume(String queue, Function<String, Void> callback) {
         try {
-            channel.basicConsume(queue, true, (consumerTag, delivery) -> {
+            channel.basicConsume(queue, false, (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                callback.apply(message);
+
+                try {
+                    callback.apply(message);
+                    channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+                } catch (Exception e) {
+                    channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+                }
+
             }, consumerTag -> {
             });
         } catch (IOException e) {
@@ -109,6 +117,17 @@ public class RabbitMQAdapter implements Queue {
     @PostConstruct
     public void init() {
         connect();
+
+        createExchange(Constants.PAYMENT_EXCHANGE, BuiltinExchangeType.DIRECT.getType());
+
+        createQueue(Constants.PAYMENT_PROCESSED_QUEUE);
+        createQueue(Constants.PAYMENT_SUCESS_QUEUE);
+        createQueue(Constants.PAYMENT_FAILED_QUEUE);
+
+        bindingQueue(Constants.PAYMENT_PROCESSED_QUEUE, Constants.PAYMENT_EXCHANGE,
+                Constants.PAYMENT_PROCESSED_ROUTING_KEY);
+        bindingQueue(Constants.PAYMENT_SUCESS_QUEUE, Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY);
+        bindingQueue(Constants.PAYMENT_FAILED_QUEUE, Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY);
     }
 
     @PreDestroy

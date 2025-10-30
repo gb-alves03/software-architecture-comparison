@@ -12,6 +12,7 @@ import com.tcc.payment_service.http.AntiFraudService;
 import com.tcc.payment_service.http.NotificationService;
 import com.tcc.payment_service.model.Payment;
 import com.tcc.payment_service.repository.PaymentRepository;
+import com.tcc.payment_service.utils.Constants;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -50,11 +51,11 @@ public class PaymentServiceImpl implements PaymentService {
             }
             payment.setStatus(PaymentStatus.SUCCESS);
             this.paymentRepository.save(payment);
-            this.queue.publish("payment.exchange", "payment.processed", payment);
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY, payment);
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             this.paymentRepository.save(payment);
-            this.queue.publish("payment.exchange", "payment.failed", payment);
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY, payment);
             throw e;
         } finally {
             this.notificationService.sendNotification(payment);
@@ -64,17 +65,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void credit(Payment payment) {
         if (payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException();
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
 
         if (this.antiFraudService.isFraudulent(payment)) {
-            throw new RuntimeException("Payment failed");
+            throw new RuntimeException(Constants.PAYMENT_FAILED);
         }
     }
 
     private void debit(Payment payment) {
         if (payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException();
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
         }
     }
 }

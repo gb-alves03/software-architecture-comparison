@@ -1,4 +1,4 @@
-version: "4.0"
+version: "3.8"
 
 services:
 
@@ -9,13 +9,21 @@ services:
     depends_on:
       - banking-monolith-database
     ports:
-      - 8080:8080
+      - 8085:8080
     networks:
       - monolith-network
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://banking-monolith-database:5432/banking_monolith_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   banking-monolith-database:
     image: postgres:14.3-alpine
@@ -28,6 +36,14 @@ services:
       - 5434:5432
     networks:
       - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   account-service-api:
     build:
@@ -43,6 +59,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://account-service-database:5432/account_service
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123456
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   account-service-database:
     image: postgres:14.3-alpine
@@ -55,6 +79,108 @@ services:
       - 5433:5432
     networks:
       - microservice-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  notification-service-api:
+    build:
+      context: notification-service
+    container_name: notification_service_api
+    ports:
+      - 8083:8080
+    networks:
+      - microservice-network
+      - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  antifraud-service-api:
+    build:
+      context: antifraud-service
+    container_name: antifraud_service_api
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    ports:
+      - 8084:8080
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://root:example@mongodb:27017/fraud-db?authSource=admin
+    networks:
+      - microservice-network
+      - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    command: redis-server --appendonly yes
+    networks:
+      - microservice-network
+      - monolith-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - microservice-network
+      - monolith-network
+
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8082:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - microservice-network
+      - monolith-network
 
   rabbit-mq:
     image: rabbitmq:3.13-management
@@ -69,6 +195,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - microservice-network
+      - monolith-network
 
 networks:
   microservice-network:
@@ -79,3 +206,5 @@ networks:
 volumes:
   rabbitmq_data:
     driver: local
+  mongo_data:
+  redis_data:

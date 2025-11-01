@@ -122,7 +122,6 @@ public class AccountServiceImpl implements AccountService {
                     input.amount(), input.transactionType());
             this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_PROCESSED_ROUTING_KEY, event);
         } catch (Exception e) {
-            // Deve ser realizado o rollback
             throw new RuntimeException("Payment failed: " + e.getMessage());
         }
 

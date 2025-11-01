@@ -1,6 +1,6 @@
 # 📊 Banking App – Arquiteturas de Software
 
-Este repositório contém a implementação de uma **mesma aplicação bancária** em três diferentes arquiteturas de software (**Monolito, Microsserviços e Serverless**) como parte do Trabalho de Conclusão de Curso (TCC).
+Este repositório contém a implementação de uma **mesma aplicação bancária** em três diferentes arquiteturas de software (**Monolito e Microsserviços**) como parte do Trabalho de Conclusão de Curso (TCC).
 
 O objetivo é **comparar desempenho, escalabilidade e manutenção** entre os diferentes estilos arquiteturais.
 
@@ -40,17 +40,6 @@ Composto pelos seguintes serviços:
 
 ---
 
-### 🔹 3. Serverless
-- Implementação baseada em **funções serverless** (Spring Cloud Function).
-- Ideal para **eventos pontuais** e **escalabilidade automática**.
-- Serviços desacoplados em funções que processam eventos de Conta, Transação e Pagamento.
-
-📂 Diretório: `/banking-app-serverless`
-- **groupId:** `com.tcc`
-- **artifactId:** `banking-app-serverless`
-
----
-
 <img width="809" height="511" alt="image" src="https://github.com/user-attachments/assets/e78ffed4-d430-409c-ba2f-8107c6dc8628" />
 
 <img width="778" height="853" alt="image" src="https://github.com/user-attachments/assets/e5b9690b-7e2a-4b36-853f-33c2cdaae888" />
@@ -69,9 +58,6 @@ Composto pelos seguintes serviços:
 - /payment-service
 - /notification-service
 
-/banking-app-serverless 
-- Projeto serverless
-
 
 ---
 
@@ -85,7 +71,6 @@ Composto pelos seguintes serviços:
 ## 🚀 Tecnologias Utilizadas
 - **Java 21** + **Spring Boot**
 - **Spring Cloud** (para microsserviços)
-- **Spring Cloud Function** (para serverless)
 - **Docker** (deploy)
 - **Mensageria:** RabbitMQ
 - **Banco de Dados:** PostgreSQL

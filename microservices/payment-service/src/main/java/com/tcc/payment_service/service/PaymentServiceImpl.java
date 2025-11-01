@@ -52,13 +52,13 @@ public class PaymentServiceImpl implements PaymentService {
             }
             payment.setStatus(PaymentStatus.SUCCESS);
             this.paymentRepository.save(payment);
-            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY,
-                    new PaymentProcessed(input.transactionId(), PaymentStatus.SUCCESS));
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY, new PaymentProcessed(
+                    input.transactionId(), input.accountId(), input.amount(), input.type(), PaymentStatus.SUCCESS));
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             this.paymentRepository.save(payment);
-            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY,
-                    new PaymentProcessed(input.transactionId(), PaymentStatus.FAILED));
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY, new PaymentProcessed(
+                    input.transactionId(), input.accountId(), input.amount(), input.type(), PaymentStatus.FAILED));
             throw e;
         } finally {
             this.notificationService.sendNotification(payment);

@@ -10,13 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.architecture.account_service.dto.DepositDTO;
 import com.architecture.account_service.dto.PaymentDTO;
+import com.architecture.account_service.dto.PaymentProcessedDTO;
+import com.architecture.account_service.dto.PaymentProcessedDTO.Input;
 import com.architecture.account_service.dto.RegisterDTO;
 import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.CardType;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
-import com.architecture.account_service.events.PaymentProcessed;
+import com.architecture.account_service.event.PaymentProcessed;
 import com.architecture.account_service.http.AntiFraudService;
 import com.architecture.account_service.http.NotificationService;
 import com.architecture.account_service.model.Account;
@@ -114,7 +116,8 @@ public class AccountServiceImpl implements AccountService {
             processPayment(account, input);
             this.accountRepository.save(account);
 
-            PaymentProcessed event = new PaymentProcessed(account.getAccountId(), input.amount(), input.transactionType());
+            PaymentProcessed event = new PaymentProcessed(transaction.getTransactionId(), account.getAccountId(),
+                    input.amount(), input.transactionType());
             this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_PROCESSED_ROUTING_KEY, event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
@@ -242,6 +245,23 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Transactional
+    @Override
+    public void paymentSuccess(PaymentProcessedDTO.Input input) {
+        Transaction transaction = this.transactionRepository.findById(input.transactionId()).orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND));
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        this.transactionRepository.save(transaction);
+    }
+
+    @Transactional
+    @Override
+    public void paymentFailed(PaymentProcessedDTO.Input input) {
+        // Ações compensatórias para débito e crédito
+        Transaction transaction = this.transactionRepository.findById(input.transactionId()).orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND));
+        transaction.setStatus(TransactionStatus.FAILED);
+        this.transactionRepository.save(transaction);
+    }
+
     private void processPayment(Account account, PaymentDTO.Input input) {
         switch (input.transactionType()) {
         case DEBIT:
@@ -316,4 +336,5 @@ public class AccountServiceImpl implements AccountService {
         }
         return (10 - (sum % 10)) % 10;
     }
+
 }

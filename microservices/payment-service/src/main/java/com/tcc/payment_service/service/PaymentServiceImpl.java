@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.tcc.payment_service.queue.Queue;
 import com.tcc.payment_service.dto.PaymentDTO;
 import com.tcc.payment_service.enumeration.PaymentStatus;
+import com.tcc.payment_service.event.PaymentProcessed;
 import com.tcc.payment_service.http.AntiFraudService;
 import com.tcc.payment_service.http.NotificationService;
 import com.tcc.payment_service.model.Payment;
@@ -51,11 +52,13 @@ public class PaymentServiceImpl implements PaymentService {
             }
             payment.setStatus(PaymentStatus.SUCCESS);
             this.paymentRepository.save(payment);
-            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY, payment);
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY,
+                    new PaymentProcessed(input.transactionId(), PaymentStatus.SUCCESS));
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             this.paymentRepository.save(payment);
-            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY, payment);
+            this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY,
+                    new PaymentProcessed(input.transactionId(), PaymentStatus.FAILED));
             throw e;
         } finally {
             this.notificationService.sendNotification(payment);

@@ -5,6 +5,6 @@ import java.math.BigDecimal;
 import com.tcc.payment_service.enumeration.PaymentType;
 
 public abstract class PaymentDTO {
-    public static record Input(Long accountId, BigDecimal amount, PaymentType type) {
+    public static record Input(Long transactionId, Long accountId, BigDecimal amount, PaymentType type) {
     };
 }

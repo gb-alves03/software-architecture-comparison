@@ -2,6 +2,7 @@ package com.architecture.account_service.utils;
 
 public interface Constants {
     String ACCOUNT_NOT_FOUND = "Account not found";
+    String TRANSACTION_NOT_FOUND = "Transaction not found";
     String INSUFFICIENT_BALANCE = "Insufficient balance";
     String TRANSACTION_FAILED = "Transaction failed";
     String TRANSACTION_TYPE_NOT_SUPPORTED = "Transaction type not supported";

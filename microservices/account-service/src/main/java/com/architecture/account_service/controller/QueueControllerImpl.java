@@ -1,5 +1,6 @@
 package com.architecture.account_service.controller;
 
+import com.architecture.account_service.dto.PaymentProcessedDTO;
 import com.architecture.account_service.queue.Queue;
 import com.architecture.account_service.service.AccountService;
 import com.architecture.account_service.utils.Constants;
@@ -20,9 +21,8 @@ public class QueueControllerImpl implements QueueController {
     public void init() {
         this.queue.consume(Constants.PAYMENT_SUCESS_QUEUE, message -> {
             try {
-                // DTO para receber a mensagem de sucesso que veio do Payment Service
-                // Criar e chamar o método do Account Service responsável por alterar o estado
-                // da transação para SUCCESS
+                PaymentProcessedDTO.Input input = objectMapper.readValue(message, PaymentProcessedDTO.Input.class);
+                this.accountService.paymentSuccess(input);
             } catch (Exception e) {
             }
             return null;
@@ -30,10 +30,8 @@ public class QueueControllerImpl implements QueueController {
 
         this.queue.consume(Constants.PAYMENT_FAILED_QUEUE, message -> {
             try {
-                // DTO para receber a mensagem de falha que veio do Payment Service
-                // Criar e chamar o método do Account Service responsável por alterar o estado
-                // da transação para FAILED e realizar as ações compensatórias de acordo com o
-                // tipo de pagamento que foi realizado
+                PaymentProcessedDTO.Input input = objectMapper.readValue(message, PaymentProcessedDTO.Input.class);
+                this.accountService.paymentFailed(input);
             } catch (Exception e) {
             }
             return null;

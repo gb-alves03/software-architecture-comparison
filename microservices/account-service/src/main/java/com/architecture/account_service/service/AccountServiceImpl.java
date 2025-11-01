@@ -10,13 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.architecture.account_service.dto.DepositDTO;
 import com.architecture.account_service.dto.PaymentDTO;
+import com.architecture.account_service.dto.PaymentProcessedDTO;
+import com.architecture.account_service.dto.PaymentProcessedDTO.Input;
 import com.architecture.account_service.dto.RegisterDTO;
 import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 import com.architecture.account_service.enumeration.CardType;
 import com.architecture.account_service.enumeration.TransactionStatus;
 import com.architecture.account_service.enumeration.TransactionType;
-import com.architecture.account_service.events.PaymentProcessed;
+import com.architecture.account_service.event.PaymentProcessed;
 import com.architecture.account_service.http.AntiFraudService;
 import com.architecture.account_service.http.NotificationService;
 import com.architecture.account_service.model.Account;
@@ -65,7 +67,8 @@ public class AccountServiceImpl implements AccountService {
         Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
-        Transaction transaction = new Transaction();
+        Transaction transaction = null;
+        transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
         transaction.setFrom(account);
         transaction.setTo(account);
@@ -87,6 +90,7 @@ public class AccountServiceImpl implements AccountService {
         } finally {
             this.transactionRepository.save(transaction);
         }
+
     }
 
     @Transactional
@@ -114,14 +118,11 @@ public class AccountServiceImpl implements AccountService {
             processPayment(account, input);
             this.accountRepository.save(account);
 
-            PaymentProcessed event = new PaymentProcessed(account.getAccountId(), input.amount(), input.transactionType());
+            PaymentProcessed event = new PaymentProcessed(transaction.getTransactionId(), account.getAccountId(),
+                    input.amount(), input.transactionType());
             this.queue.publish(Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_PROCESSED_ROUTING_KEY, event);
-
-            transaction.setStatus(TransactionStatus.SUCCESS);
-            this.transactionRepository.save(transaction);
         } catch (Exception e) {
-            transaction.setStatus(TransactionStatus.FAILED);
-            this.transactionRepository.save(transaction);
+            // Deve ser realizado o rollback
             throw new RuntimeException("Payment failed: " + e.getMessage());
         }
 
@@ -140,10 +141,9 @@ public class AccountServiceImpl implements AccountService {
         account.setOwner(owner);
         account.setBalance(BigDecimal.ZERO);
         account.validate();
-        account.setCards(new ArrayList<Card>());
 
         Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(1000));
-        account.getCards().add(card);
+        account.setCard(card);;
 
         this.ownerRepository.save(owner);
         this.accountRepository.save(account);
@@ -242,6 +242,37 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Transactional
+    @Override
+    public void paymentSuccess(PaymentProcessedDTO.Input input) {
+        Transaction transaction = this.transactionRepository.findById(input.transactionId())
+                .orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND));
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        this.transactionRepository.save(transaction);
+    }
+
+    @Transactional
+    @Override
+    public void paymentFailed(PaymentProcessedDTO.Input input) {
+        Account account = null;
+        account = this.accountRepository.findById(input.accountId())
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
+        
+        if (TransactionType.DEBIT.equals(input.type())) {
+            account.setBalance(account.getBalance().add(input.amount()));
+        }
+
+        if (TransactionType.CREDIT.equals(input.type())) {
+            account.getCard().setCreditLimit(account.getCard().getCreditLimit().add(input.amount()));
+            this.cardRepository.save(account.getCard());
+        }
+
+        Transaction transaction = this.transactionRepository.findById(input.transactionId())
+                .orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND));
+        transaction.setStatus(TransactionStatus.FAILED);
+        this.transactionRepository.save(transaction);
+    }
+
     private void processPayment(Account account, PaymentDTO.Input input) {
         switch (input.transactionType()) {
         case DEBIT:
@@ -251,15 +282,12 @@ public class AccountServiceImpl implements AccountService {
             account.setBalance(account.getBalance().subtract(input.amount()));
             break;
         case CREDIT:
-            List<Card> cards = account.getCards();
-
-            for (Card card : cards) {
-                if (card.getCreditLimit().compareTo(input.amount()) < 0) {
-                    throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
-                }
-                card.setCreditLimit(card.getCreditLimit().subtract(input.amount()));
-                break;
+            Card card = account.getCard();
+            
+            if(card.getCreditLimit().compareTo(input.amount()) < 0) {
+                throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
             }
+            card.setCreditLimit(card.getCreditLimit().subtract(input.amount()));
             break;
         default:
             throw new RuntimeException(Constants.TRANSACTION_TYPE_NOT_SUPPORTED);
@@ -316,4 +344,5 @@ public class AccountServiceImpl implements AccountService {
         }
         return (10 - (sum % 10)) % 10;
     }
+
 }

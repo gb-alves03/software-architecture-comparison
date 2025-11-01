@@ -1,4 +1,4 @@
-package com.architecture.account_service.events;
+package com.architecture.account_service.event;
 
 import java.math.BigDecimal;
 
@@ -6,15 +6,25 @@ import com.architecture.account_service.enumeration.TransactionType;
 import com.architecture.account_service.model.Account;
 
 public class PaymentProcessed {
-    
+
+    private Long transactionId;
     private Long accountId;
     private BigDecimal amount;
     private TransactionType type;
 
-    public PaymentProcessed(Long accountId, BigDecimal amount, TransactionType type) {
+    public PaymentProcessed(Long transactionId, Long accountId, BigDecimal amount, TransactionType type) {
+        this.transactionId = transactionId;
         this.accountId = accountId;
         this.amount = amount;
         this.type = type;
+    }
+
+    public Long getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
     }
 
     public Long getAccountId() {

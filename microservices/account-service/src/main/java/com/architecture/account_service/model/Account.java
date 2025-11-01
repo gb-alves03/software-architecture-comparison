@@ -25,7 +25,7 @@ public class Account {
     @JoinColumn(name = "owner_id", referencedColumnName = "ownerId")
     private Owner owner;
     @OneToMany(mappedBy = "account")
-    private List<Card> cards;
+    private Card card;
 
     public void validate() {
         if (owner == null) {
@@ -60,11 +60,11 @@ public class Account {
         this.owner = owner;
     }
 
-    public List<Card> getCards() {
-        return cards;
+    public Card getCard() {
+        return card;
     }
 
-    public void setCards(List<Card> cards) {
-        this.cards = cards;
+    public void setCard(Card card) {
+        this.card = card;
     }
 }

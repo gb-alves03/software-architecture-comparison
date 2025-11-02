@@ -50,6 +50,9 @@ services:
     container_name: banking-microservice-account
     depends_on:
       - banking-microservice-account-database
+      - rabbit-mq
+      - antifraud-service-api
+      - notification-service-api
     ports:
       - 8081:8080
     networks:
@@ -58,6 +61,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://banking-microservice-account-database:5432/banking-microservice-account
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123456
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud_service_api:8080
+      NOTIFICATION_URL: http://notification_service_api:8080
     deploy:
       resources:
         limits:
@@ -73,6 +82,9 @@ services:
     container_name: banking-microservice-payment
     depends_on:
       - banking-microservice-payment-database
+      - rabbit-mq
+      - antifraud-service-api
+      - notification-service-api
     ports:
       - 8082:8080
     networks:
@@ -81,6 +93,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://banking-microservice-payment-database:5432/banking-microservice-payment
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123456
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud_service_api:8080
+      NOTIFICATION_URL: http://notification_service_api:8080
     deploy:
       resources:
         limits:

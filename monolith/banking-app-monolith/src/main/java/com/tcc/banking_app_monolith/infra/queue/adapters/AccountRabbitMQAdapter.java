@@ -5,7 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import com.tcc.banking_app_monolith.infra.queue.Queue;
+import com.tcc.banking_app_monolith.infra.queue.AccountQueue;
+import com.tcc.banking_app_monolith.utils.Constants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 @Component
-public class RabbitMQAdapter implements Queue {
+public class AccountRabbitMQAdapter implements AccountQueue {
 
     @Value("${rabbitmq.host}")
     private String host;
@@ -111,6 +112,16 @@ public class RabbitMQAdapter implements Queue {
     @PostConstruct
     public void init() {
         connect();
+
+        createExchange(Constants.PAYMENT_EXCHANGE.getValue(), BuiltinExchangeType.DIRECT.getType());
+
+        createQueue(Constants.PAYMENT_PROCESSED_QUEUE.getValue());
+        createQueue(Constants.PAYMENT_SUCCESS_QUEUE.getValue());
+        createQueue(Constants.PAYMENT_FAILED_QUEUE.getValue());
+
+        bindingQueue(Constants.PAYMENT_PROCESSED_QUEUE.getValue(), Constants.PAYMENT_EXCHANGE.getValue(), Constants.PAYMENT_PROCESSED_ROUTING_KEY.getValue());
+        bindingQueue(Constants.PAYMENT_SUCCESS_QUEUE.getValue(), Constants.PAYMENT_EXCHANGE.getValue(), Constants.PAYMENT_SUCCESS_ROUTING_KEY.getValue());
+        bindingQueue(Constants.PAYMENT_FAILED_QUEUE.getValue(), Constants.PAYMENT_EXCHANGE.getValue(), Constants.PAYMENT_FAILED_ROUTING_KEY.getValue());
     }
 
     @PreDestroy

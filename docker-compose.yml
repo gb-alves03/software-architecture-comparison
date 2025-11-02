@@ -6,7 +6,16 @@ services:
       context: ./monolith/banking-app-monolith
     container_name: banking_app_monolith
     depends_on:
-      - banking-monolith-database
+      banking-monolith-database:
+        condition: service_started
+      rabbit-mq:
+        condition: service_healthy
+      banking-microservice-account-database:
+        condition: service_started
+      antifraud-service-api:
+        condition: service_started
+      notification-service-api:
+        condition: service_started
     ports:
       - 8085:8080
     networks:
@@ -15,6 +24,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://banking-monolith-database:5432/banking_monolith_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud_service_api:8080
+      NOTIFICATION_URL: http://notification_service_api:8080
     deploy:
       resources:
         limits:

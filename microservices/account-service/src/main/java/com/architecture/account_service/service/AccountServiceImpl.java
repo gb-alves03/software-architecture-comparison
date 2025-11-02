@@ -2,8 +2,6 @@ package com.architecture.account_service.service;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.architecture.account_service.dto.DepositDTO;
 import com.architecture.account_service.dto.PaymentDTO;
 import com.architecture.account_service.dto.PaymentProcessedDTO;
-import com.architecture.account_service.dto.PaymentProcessedDTO.Input;
 import com.architecture.account_service.dto.RegisterDTO;
 import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
@@ -67,8 +64,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
 
-        Transaction transaction = null;
-        transaction = new Transaction();
+        Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
         transaction.setFrom(account);
         transaction.setTo(account);
@@ -142,7 +138,8 @@ public class AccountServiceImpl implements AccountService {
         account.validate();
 
         Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(1000));
-        account.setCard(card);;
+        account.setCard(card);
+        ;
 
         this.ownerRepository.save(owner);
         this.accountRepository.save(account);
@@ -244,6 +241,9 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public void paymentSuccess(PaymentProcessedDTO.Input input) {
+        if (input == null || input.transactionId() == null) {
+            throw new RuntimeException("Payment processed input and transactionId cannot be null");
+        }
         Transaction transaction = this.transactionRepository.findById(input.transactionId())
                 .orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND));
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -253,10 +253,15 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public void paymentFailed(PaymentProcessedDTO.Input input) {
-        Account account = null;
-        account = this.accountRepository.findById(input.accountId())
+        if (input == null || input.transactionId() == null || input.accountId() == null || input.type() == null
+                || input.amount() == null) {
+            throw new RuntimeException(
+                    "Payment processed input, transactionId, accountId, type and amount cannot be null");
+        }
+
+        Account account = this.accountRepository.findById(input.accountId())
                 .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND));
-        
+
         if (TransactionType.DEBIT.equals(input.type())) {
             account.setBalance(account.getBalance().add(input.amount()));
         }
@@ -282,8 +287,8 @@ public class AccountServiceImpl implements AccountService {
             break;
         case CREDIT:
             Card card = account.getCard();
-            
-            if(card.getCreditLimit().compareTo(input.amount()) < 0) {
+
+            if (card.getCreditLimit().compareTo(input.amount()) < 0) {
                 throw new RuntimeException(Constants.INSUFFICIENT_BALANCE);
             }
             card.setCreditLimit(card.getCreditLimit().subtract(input.amount()));

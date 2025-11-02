@@ -3,7 +3,6 @@ package com.architecture.account_service.event;
 import java.math.BigDecimal;
 
 import com.architecture.account_service.enumeration.TransactionType;
-import com.architecture.account_service.model.Account;
 
 public class PaymentProcessed {
 

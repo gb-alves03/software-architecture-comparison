@@ -38,6 +38,6 @@ public class NotificationService {
     }
 
     private void send(NotificationDTO.Request request) {
-        this.http.post().uri("/v1/notification/stable").bodyValue(request).retrieve().bodyToMono(Void.class).block();
+        this.http.post().uri(notificationUrl + "/v1/notification/stable").bodyValue(request).retrieve().bodyToMono(Void.class).block();
     }
 }

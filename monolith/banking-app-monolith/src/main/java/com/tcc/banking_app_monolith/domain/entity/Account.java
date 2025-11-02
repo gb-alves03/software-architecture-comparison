@@ -2,7 +2,6 @@ package com.tcc.banking_app_monolith.domain.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.util.List;
 
 @Entity
 @Table(name = "accounts")
@@ -17,16 +16,16 @@ public class Account {
     @JoinColumn(name = "owner_id", referencedColumnName = "id")
     private Owner owner;
     @OneToMany(mappedBy = "account")
-    private List<Card> cards;
+    private Card card;
 
 
     public Account() {}
 
-    public Account(Long id, BigDecimal balance, Owner owner, List<Card> cards) {
+    public Account(Long id, BigDecimal balance, Owner owner, Card card) {
         this.id = id;
         this.balance = balance;
         this.owner = owner;
-        this.cards = cards;
+        this.card = card;
     }
 
     public void validate() {
@@ -62,11 +61,11 @@ public class Account {
         this.owner = owner;
     }
 
-    public List<Card> getCards() {
-        return cards;
+    public Card getCard() {
+        return card;
     }
 
-    public void setCards(List<Card> cards) {
-        this.cards = cards;
+    public void setCard(Card card) {
+        this.card = card;
     }
 }

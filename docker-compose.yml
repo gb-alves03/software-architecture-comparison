@@ -28,8 +28,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
-      ANTIFRAUD_URL: http://antifraud_service_api:8080
-      NOTIFICATION_URL: http://notification_service_api:8080
+      ANTIFRAUD_URL: http://antifraud-service-api:8080
+      NOTIFICATION_URL: http://notification-service-api:8080
     deploy:
       resources:
         limits:
@@ -120,8 +120,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
-      ANTIFRAUD_URL: http://antifraud_service_api:8080
-      NOTIFICATION_URL: http://notification_service_api:8080
+      ANTIFRAUD_URL: http://antifraud-service-api:8080
+      NOTIFICATION_URL: http://notification-service-api:8080
     deploy:
       resources:
         limits:

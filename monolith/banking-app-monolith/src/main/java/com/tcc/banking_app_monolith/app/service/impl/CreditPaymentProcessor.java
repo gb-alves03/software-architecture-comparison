@@ -6,7 +6,9 @@ import com.tcc.banking_app_monolith.domain.entity.Account;
 import com.tcc.banking_app_monolith.domain.entity.Card;
 import com.tcc.banking_app_monolith.domain.enums.TransactionType;
 import com.tcc.banking_app_monolith.utils.Constants;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CreditPaymentProcessor implements PaymentProcessor {
 
     @Override

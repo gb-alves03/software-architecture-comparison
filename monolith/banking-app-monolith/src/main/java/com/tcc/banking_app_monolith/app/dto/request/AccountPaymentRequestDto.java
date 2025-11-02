@@ -11,6 +11,6 @@ public record AccountPaymentRequestDto(
         Long accountId,
         @NotNull(message = "Amount cannot be null")
         BigDecimal amount,
-        @NotBlank(message = "Transaction type cannot be blank")
+        @NotNull(message = "Transaction type cannot be blank")
         TransactionType transactionType
 ) {}

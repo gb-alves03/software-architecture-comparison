@@ -303,7 +303,7 @@ public class AccountServiceImpl implements AccountService {
             String number = generateCardNumber();
             String cvv = generateCvv();
 
-            if (!this.cardRepository.existsCardNumber(number)) {
+            if (!this.cardRepository.existsByNumber(number)) {
                 Card card = new Card();
                 card.setNumber(number);
                 card.setCvv(cvv);

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
+import com.tcc.payment_service.utils.Constants;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -116,6 +117,17 @@ public class RabbitMQAdapter implements Queue {
     @PostConstruct
     public void init() {
         connect();
+        
+        createExchange(Constants.PAYMENT_EXCHANGE, BuiltinExchangeType.DIRECT.getType());
+
+        createQueue(Constants.PAYMENT_PROCESSED_QUEUE);
+        createQueue(Constants.PAYMENT_SUCESS_QUEUE);
+        createQueue(Constants.PAYMENT_FAILED_QUEUE);
+
+        bindingQueue(Constants.PAYMENT_PROCESSED_QUEUE, Constants.PAYMENT_EXCHANGE,
+                Constants.PAYMENT_PROCESSED_ROUTING_KEY);
+        bindingQueue(Constants.PAYMENT_SUCESS_QUEUE, Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_SUCCESS_ROUTING_KEY);
+        bindingQueue(Constants.PAYMENT_FAILED_QUEUE, Constants.PAYMENT_EXCHANGE, Constants.PAYMENT_FAILED_ROUTING_KEY);
     }
 
     @PreDestroy

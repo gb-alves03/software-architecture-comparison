@@ -1,5 +1,8 @@
 package com.tcc.notification_service.notification;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class NotificationImpl implements Notification {
 
     @Override

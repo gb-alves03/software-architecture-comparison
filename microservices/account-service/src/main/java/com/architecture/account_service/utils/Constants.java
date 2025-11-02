@@ -10,7 +10,7 @@ public interface Constants {
 
     String PAYMENT_EXCHANGE = "payment.exchange";
     String PAYMENT_PROCESSED_QUEUE = "payment.queue.processed";
-    String PAYMENT_SUCESS_QUEUE = "payment.queue.sucess";
+    String PAYMENT_SUCESS_QUEUE = "payment.queue.success";
     String PAYMENT_FAILED_QUEUE = "payment.queue.failed";
     
     String PAYMENT_PROCESSED_ROUTING_KEY = "payment.processed";

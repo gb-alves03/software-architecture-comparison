@@ -6,6 +6,8 @@ import com.architecture.account_service.service.AccountService;
 import com.architecture.account_service.utils.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.annotation.PostConstruct;
+
 public class QueueControllerImpl implements QueueController {
     private final AccountService accountService;
     private final Queue queue;
@@ -17,6 +19,7 @@ public class QueueControllerImpl implements QueueController {
         this.queue = queue;
     }
 
+    @PostConstruct
     @Override
     public void init() {
         this.queue.consume(Constants.PAYMENT_SUCESS_QUEUE, message -> {

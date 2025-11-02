@@ -2,7 +2,8 @@ package com.tcc.banking_app_monolith.app.service.impl;
 
 import com.tcc.banking_app_monolith.app.dto.request.*;
 import com.tcc.banking_app_monolith.app.dto.response.RegisterResponseDto;
-import com.tcc.banking_app_monolith.app.events.PaymentDone;
+import com.tcc.banking_app_monolith.app.event.AccountPaymentProcessed;
+import com.tcc.banking_app_monolith.app.event.PaymentProcessed;
 import com.tcc.banking_app_monolith.app.repository.AccountRepository;
 import com.tcc.banking_app_monolith.app.repository.CardRepository;
 import com.tcc.banking_app_monolith.app.repository.OwnerRepository;
@@ -18,13 +19,13 @@ import com.tcc.banking_app_monolith.domain.enums.TransactionStatus;
 import com.tcc.banking_app_monolith.domain.enums.TransactionType;
 import com.tcc.banking_app_monolith.infra.api.antifraud.client.AccountAntifraudClient;
 import com.tcc.banking_app_monolith.infra.api.notification.client.AccountNotificationClient;
-import com.tcc.banking_app_monolith.infra.queue.Queue;
+import com.tcc.banking_app_monolith.infra.queue.AccountQueue;
+import com.tcc.banking_app_monolith.utils.Constants;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class AccountServiceImpl implements AccountService {
     private final TransactionRepository transactionRepository;
     private final AccountNotificationClient accountNotificationClient;
     private final AccountAntifraudClient accountAntifraudClient;
-    private final Queue queue;
+    private final AccountQueue accountQueue;
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -50,7 +51,7 @@ public class AccountServiceImpl implements AccountService {
                               TransactionRepository transactionRepository,
                               AccountNotificationClient accountNotificationClient,
                               AccountAntifraudClient accountAntifraudClient, List<PaymentProcessor> processors,
-                              Queue queue) {
+                              AccountQueue accountQueue) {
         this.accountRepository = accountRepository;
         this.ownerRepository = ownerRepository;
         this.cardRepository = cardRepository;
@@ -59,7 +60,7 @@ public class AccountServiceImpl implements AccountService {
         this.accountAntifraudClient = accountAntifraudClient;
         this.paymentProcessors = processors.stream()
                 .collect(Collectors.toMap(PaymentProcessor::getType, paymentProcessor -> paymentProcessor));
-        this.queue = queue;
+        this.accountQueue = accountQueue;
     }
 
 
@@ -80,10 +81,9 @@ public class AccountServiceImpl implements AccountService {
         account.setOwner(owner);
         account.setBalance(BigDecimal.ZERO);
         account.validate();
-        account.setCards(new ArrayList<Card>());
 
         Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(1000));
-        account.getCards().add(card);
+        account.setCard(card);
 
         ownerRepository.save(owner);
         accountRepository.save(account);
@@ -101,11 +101,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void deposit(DepositRequestDto dto) {
         if (dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Deposit amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATER_THAN_ZERO.getValue());
         }
 
         Account account = this.accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.DEPOSIT);
@@ -133,12 +133,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public void withdrawal(WithdrawalRequestDto dto) {
-        if (dto.amount().compareTo(BigDecimal.ZERO) <= 0) throw new RuntimeException("Withdrawal amount must be greater than zero");
+        if (dto.amount().compareTo(BigDecimal.ZERO) <= 0) throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATER_THAN_ZERO.getValue());
 
         Account account = this.accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
 
-        if (account.getBalance().compareTo(dto.amount()) < 0) throw new RuntimeException("Insufficient balance");
+        if (account.getBalance().compareTo(dto.amount()) < 0) throw new RuntimeException(Constants.INSUFFICIENT_BALANCE.getValue());
 
         Transaction transaction = new Transaction();
         transaction.setType(TransactionType.WITHDRAWAL);
@@ -167,16 +167,16 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void transfer(TransferRequestDto dto) {
         if (dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Transfer amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATER_THAN_ZERO.getValue());
         }
 
         Account from = this.accountRepository.findById(dto.from())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
         Account to = this.accountRepository.findById(dto.to())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
 
         if (from.getBalance().compareTo(dto.amount()) < 0) {
-            throw new RuntimeException("Insufficient balance");
+            throw new RuntimeException(Constants.INSUFFICIENT_BALANCE.getValue());
         }
 
         Transaction transaction = new Transaction();
@@ -195,11 +195,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void payment(AccountPaymentRequestDto dto) {
         if (dto.amount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Payment amount must be greater than zero");
+            throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATER_THAN_ZERO.getValue());
         }
 
         Account account = this.accountRepository.findById(dto.accountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
 
         Transaction transaction = new Transaction();
         transaction.setType(dto.transactionType());
@@ -214,8 +214,8 @@ public class AccountServiceImpl implements AccountService {
             processPayment(account, dto);
             this.accountRepository.save(account);
 
-            PaymentDone event = new PaymentDone(account.getId(), dto.amount(), dto.transactionType());
-            this.queue.publish(PaymentDone.queue, null, event);
+            AccountPaymentProcessed event = new AccountPaymentProcessed(transaction.getId(), account.getId(), dto.amount(), dto.transactionType());
+            this.accountQueue.publish(Constants.PAYMENT_EXCHANGE.getValue(), Constants.PAYMENT_PROCESSED_ROUTING_KEY.getValue(), event);
 
             transaction.setStatus(TransactionStatus.SUCCESS);
             this.transactionRepository.save(transaction);
@@ -226,24 +226,49 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    public void paymentSuccess(PaymentProcessedRequestDto dto) {
+        Transaction transaction = this.transactionRepository.findById(dto.transactionId())
+                .orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND.getValue()));
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        this.transactionRepository.save(transaction);
+    }
+
+    @Override
+    public void paymentFailed(PaymentProcessedRequestDto dto) {
+        Account account = this.accountRepository.findById(dto.accountId())
+                .orElseThrow(() -> new RuntimeException(Constants.ACCOUNT_NOT_FOUND.getValue()));
+
+        if (TransactionType.DEBIT.equals(dto.type())) {
+            account.setBalance(account.getBalance().add(dto.amount()));
+        }
+
+        if (TransactionType.CREDIT.equals(dto.type())) {
+            account.getCard().setCreditLimit(account.getCard().getCreditLimit().add(dto.amount()));
+            this.cardRepository.save(account.getCard());
+        }
+
+        Transaction transaction = this.transactionRepository.findById(dto.transactionId())
+                .orElseThrow(() -> new RuntimeException(Constants.TRANSACTION_NOT_FOUND.getValue()));
+        transaction.setStatus(TransactionStatus.FAILED);
+        this.transactionRepository.save(transaction);
+    }
+
     private Card generateNewCard(Account account, CardType type, BigDecimal limit) {
-        for (int attempt = 1; attempt <= 3; attempt++) {
+        while (true) {
             String number = generateCardNumber();
             String cvv = generateCvv();
 
-            if (this.cardRepository.existsByNumber(number)) {
-                continue;
+            if (!this.cardRepository.existsByNumber(number)) {
+                Card card = new Card();
+                card.setNumber(number);
+                card.setCvv(cvv);
+                card.setType(type);
+                card.setAccount(account);
+                card.setCreditLimit(limit);
+                return card;
             }
-
-            Card card = new Card();
-            card.setNumber(number);
-            card.setCvv(cvv);
-            card.setType(type);
-            card.setAccount(account);
-            card.setCreditLimit(limit);
-            return card;
         }
-        throw new RuntimeException("Error generate unique card number");
     }
 
     private String generateCardNumber() {
@@ -308,7 +333,7 @@ public class AccountServiceImpl implements AccountService {
     private void processPayment(Account account, AccountPaymentRequestDto dto) {
         PaymentProcessor processor = paymentProcessors.get(dto.transactionType());
 
-        if (processor == null) throw new RuntimeException("Transaction type not supported");
+        if (processor == null) throw new RuntimeException(Constants.TRANSACTION_TYPE_NOT_SUPPORTED.getValue());
 
         processor.process(account, dto);
     }

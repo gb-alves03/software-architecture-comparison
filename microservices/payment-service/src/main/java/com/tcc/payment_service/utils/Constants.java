@@ -9,6 +9,7 @@ public interface Constants {
     String PAYMENT_SUCESS_QUEUE = "payment.queue.sucess";
     String PAYMENT_FAILED_QUEUE = "payment.queue.failed";
     
+    String PAYMENT_PROCESSED_ROUTING_KEY = "payment.processed";
     String PAYMENT_SUCCESS_ROUTING_KEY = "payment.success";
     String PAYMENT_FAILED_ROUTING_KEY = "payment.failed";
 }

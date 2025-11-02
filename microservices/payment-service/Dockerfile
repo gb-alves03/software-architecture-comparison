@@ -5,6 +5,6 @@ RUN ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:21-jdk
 WORKDIR /app
-COPY --from=build /app/target/account-service-0.0.1-SNAPSHOT.jar account.jar
-EXPOSE 8081
-ENTRYPOINT ["java","-jar","account.jar"]
+COPY --from=build /app/target/payment-service-0.0.1-SNAPSHOT.jar payment.jar
+EXPOSE 8082
+ENTRYPOINT ["java","-jar","payment.jar"]

@@ -15,7 +15,8 @@ public class Account {
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", referencedColumnName = "id")
     private Owner owner;
-    @OneToMany(mappedBy = "account")
+    @OneToOne
+    @JoinColumn(name = "card_id")
     private Card card;
 
 

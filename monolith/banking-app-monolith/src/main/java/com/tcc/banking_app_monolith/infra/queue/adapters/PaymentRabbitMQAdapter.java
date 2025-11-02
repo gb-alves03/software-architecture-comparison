@@ -1,22 +1,22 @@
 package com.tcc.banking_app_monolith.infra.queue.adapters;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.tcc.banking_app_monolith.infra.queue.PaymentQueue;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import com.tcc.banking_app_monolith.infra.queue.Queue;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.client.*;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-
 @Component
-public class RabbitMQAdapter implements Queue {
+public class PaymentRabbitMQAdapter implements PaymentQueue {
 
     @Value("${rabbitmq.host}")
     private String host;
@@ -71,9 +71,16 @@ public class RabbitMQAdapter implements Queue {
     @Override
     public void consume(String queue, Function<String, Void> callback) {
         try {
-            channel.basicConsume(queue, true, (consumerTag, delivery) -> {
+            channel.basicConsume(queue, false, (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
-                callback.apply(message);
+
+                try {
+                    callback.apply(message);
+                    channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+                } catch (Exception e) {
+                    channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+                }
+
             }, consumerTag -> {
             });
         } catch (IOException e) {

@@ -5,8 +5,7 @@ import com.tcc.banking_app_monolith.app.service.PaymentProcessor;
 import com.tcc.banking_app_monolith.domain.entity.Account;
 import com.tcc.banking_app_monolith.domain.entity.Card;
 import com.tcc.banking_app_monolith.domain.enums.TransactionType;
-
-import java.util.List;
+import com.tcc.banking_app_monolith.utils.Constants;
 
 public class CreditPaymentProcessor implements PaymentProcessor {
 
@@ -17,14 +16,11 @@ public class CreditPaymentProcessor implements PaymentProcessor {
 
     @Override
     public void process(Account account, AccountPaymentRequestDto dto) {
-        List<Card> cards = account.getCards();
-        for (Card card : cards) {
-            if (card.getCreditLimit().compareTo(dto.amount()) < 0) {
-                throw new RuntimeException("Insufficient credit card limit for credit transaction");
-            }
-            card.setCreditLimit(card.getCreditLimit().subtract(dto.amount()));
-            return;
+        Card card = account.getCard();
+
+        if (card.getCreditLimit().compareTo(dto.amount()) < 0) {
+            throw new RuntimeException(Constants.INSUFFICIENT_LIMIT.getValue());
         }
-        throw new RuntimeException("No card with sufficient credit limit");
+        card.setCreditLimit(card.getCreditLimit().subtract(dto.amount()));
     }
 }

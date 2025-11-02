@@ -10,4 +10,6 @@ public interface AccountService {
     void withdrawal(WithdrawalRequestDto dto);
     void transfer(TransferRequestDto dto);
     void payment(AccountPaymentRequestDto dto);
+    void paymentSuccess(PaymentProcessedRequestDto dto);
+    void paymentFailed(PaymentProcessedRequestDto dto);
 }

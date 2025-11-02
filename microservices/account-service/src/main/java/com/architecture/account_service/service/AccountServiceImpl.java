@@ -125,7 +125,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public void register(RegisterDTO.Input input) {
+    public RegisterDTO.Output register(RegisterDTO.Input input) {
         Owner owner = new Owner();
         owner.setName(input.name());
         owner.setEmail(input.email());
@@ -142,8 +142,10 @@ public class AccountServiceImpl implements AccountService {
         ;
 
         this.ownerRepository.save(owner);
-        this.accountRepository.save(account);
+        account = this.accountRepository.save(account);
         this.cardRepository.save(card);
+        
+        return new RegisterDTO.Output(account.getAccountId());
     }
 
     @Transactional

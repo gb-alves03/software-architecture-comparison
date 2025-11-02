@@ -10,7 +10,7 @@ import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 
 public interface AccountController {
-    public ResponseEntity<String> register(@RequestBody RegisterDTO.Input input);
+    public ResponseEntity<?> register(@RequestBody RegisterDTO.Input input);
 
     public ResponseEntity<String> transfer(@RequestBody TransferDTO.Input input);
 

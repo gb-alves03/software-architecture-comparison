@@ -8,7 +8,7 @@ import com.architecture.account_service.dto.TransferDTO;
 import com.architecture.account_service.dto.WithdrawalDTO;
 
 public interface AccountService {
-    public void register(RegisterDTO.Input input);
+    public RegisterDTO.Output register(RegisterDTO.Input input);
 
     public void transfer(TransferDTO.Input input);
 

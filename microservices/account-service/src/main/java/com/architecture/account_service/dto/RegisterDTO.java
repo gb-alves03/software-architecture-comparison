@@ -4,6 +4,6 @@ public abstract class RegisterDTO {
     public static record Input(String name, String email, String phone) {
     };
 
-    public static record Output(String accountId) {
+    public static record Output(Long accountId) {
     };
 }

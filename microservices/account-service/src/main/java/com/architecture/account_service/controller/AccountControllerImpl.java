@@ -24,10 +24,10 @@ public class AccountControllerImpl implements AccountController {
 
     @PostMapping
     @Override
-    public ResponseEntity<String> register(RegisterDTO.Input input) {
+    public ResponseEntity<?> register(RegisterDTO.Input input) {
         try {
-            this.accountService.register(input);
-            return ResponseEntity.status(HttpStatus.OK).build();
+            RegisterDTO.Output output = this.accountService.register(input);
+            return ResponseEntity.status(HttpStatus.OK).body(output);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }

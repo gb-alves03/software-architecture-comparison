@@ -9,7 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,7 +23,8 @@ public class Account {
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", referencedColumnName = "ownerId")
     private Owner owner;
-    @OneToMany(mappedBy = "account")
+    @OneToOne
+    @JoinColumn(name = "card_id")
     private Card card;
 
     public void validate() {

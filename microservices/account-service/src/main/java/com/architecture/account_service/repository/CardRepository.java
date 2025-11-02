@@ -9,6 +9,6 @@ import com.architecture.account_service.model.Card;
 
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
-    boolean existsCardNumber(String number);
+    boolean existsByNumber(String number);
     Optional<Card> findByNumber(String number);
 }

@@ -285,6 +285,18 @@ services:
       - microservice-network
       - monolith-network
 
+  k6:
+    image: grafana/k6:latest
+    container_name: k6
+    depends_on:
+      - banking-microservice-account
+    networks:
+      - microservice-network
+      - monolith-network
+    volumes:
+      - ./microservices/account-service/src/test/java/com/architecture/account_service/k6:/scripts
+    entrypoint: ["tail", "-f", "/dev/null"]
+
 networks:
   microservice-network:
     driver: bridge

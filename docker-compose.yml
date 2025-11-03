@@ -288,6 +288,8 @@ services:
   k6:
     image: grafana/k6:latest
     container_name: k6
+    ports:
+      - "6565:6565"
     depends_on:
       - banking-microservice-account
     networks:
@@ -296,6 +298,28 @@ services:
     volumes:
       - ./microservices/account-service/src/test/java/com/architecture/account_service/k6:/scripts
     entrypoint: ["tail", "-f", "/dev/null"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - k6
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - microservice-network
+      - monolith-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - microservice-network
+      - monolith-network
 
 networks:
   microservice-network:

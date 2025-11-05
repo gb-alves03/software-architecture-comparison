@@ -6,8 +6,11 @@ import com.tcc.antifraud_service.repository.FraudRepository;
 import com.tcc.antifraud_service.repository.mongo.FraudCheckDocument;
 import com.tcc.antifraud_service.service.FraudService;
 import com.tcc.antifraud_service.service.strategy.FraudRule;
+import com.tcc.antifraud_service.service.strategy.TransferOverLimitRule;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +22,10 @@ import java.util.UUID;
 @Service
 public class FraudServiceImpl implements FraudService {
 
+    private static final Logger log = LoggerFactory.getLogger(FraudServiceImpl.class);
+
     private final FraudRepository repository;
     private final StringRedisTemplate redisTemplate;
-    private final Counter approvedCounter;
-    private final Counter rejectedCounter;
-    private final List<FraudRule> fraudRules;
 
     public FraudServiceImpl(FraudRepository repository,
                             StringRedisTemplate redisTemplate,
@@ -31,9 +33,6 @@ public class FraudServiceImpl implements FraudService {
                             List<FraudRule> fraudRules) {
         this.repository = repository;
         this.redisTemplate = redisTemplate;
-        this.approvedCounter = meterRegistry.counter("fraud.approved");
-        this.rejectedCounter = meterRegistry.counter("fraud.rejected");
-        this.fraudRules = fraudRules;
     }
 
     @Override
@@ -45,21 +44,26 @@ public class FraudServiceImpl implements FraudService {
             attempts = redisTemplate.opsForValue().increment(key);
             redisTemplate.expire(key, Duration.ofMinutes(2));
         } catch (Exception e) {
+            log.warn("Redis unavailable defaulting attempts to 1", e);
             attempts = 1L;
         }
 
+        FraudResponse response = null;
 
-        Long finalAttempts = attempts;
-        FraudResponse response = fraudRules.stream()
-                        .map(rule -> rule.apply(request, finalAttempts))
-                                .filter(Optional::isPresent)
-                                        .map(Optional::get)
-                                                .findFirst()
-                                                        .orElse(new FraudResponse(
-                                                                request.transactionId(),
-                                                                false,
-                                                                "Transação autorizada!"
-                                                        ));
+        TransferOverLimitRule rule = new TransferOverLimitRule();
+
+        Optional<FraudResponse> maybe = rule.apply(request, attempts);
+        if (maybe.isPresent()) {
+            response = maybe.get();
+        }
+
+        if (response == null) {
+            response = new FraudResponse(
+                    request.transactionId(),
+                    false,
+                    "Transação autorizada!"
+            );
+        }
 
         repository.save(new FraudCheckDocument(
                 UUID.randomUUID().toString(),
@@ -70,12 +74,6 @@ public class FraudServiceImpl implements FraudService {
                 response.reason()
         ));
 
-        if (response.fraudulent()) {
-            rejectedCounter.increment();
-        }
-        approvedCounter.increment();
-
         return response;
     }
-
 }

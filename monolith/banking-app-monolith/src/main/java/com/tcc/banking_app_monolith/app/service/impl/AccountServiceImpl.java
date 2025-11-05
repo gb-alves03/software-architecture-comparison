@@ -3,7 +3,6 @@ package com.tcc.banking_app_monolith.app.service.impl;
 import com.tcc.banking_app_monolith.app.dto.request.*;
 import com.tcc.banking_app_monolith.app.dto.response.RegisterResponseDto;
 import com.tcc.banking_app_monolith.app.event.AccountPaymentProcessed;
-import com.tcc.banking_app_monolith.app.event.PaymentProcessed;
 import com.tcc.banking_app_monolith.app.repository.AccountRepository;
 import com.tcc.banking_app_monolith.app.repository.CardRepository;
 import com.tcc.banking_app_monolith.app.repository.OwnerRepository;
@@ -82,7 +81,7 @@ public class AccountServiceImpl implements AccountService {
         account.setBalance(BigDecimal.ZERO);
         account.validate();
 
-        Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(1000));
+        Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(70000));
         account.setCard(card);
 
         ownerRepository.save(owner);
@@ -188,7 +187,7 @@ public class AccountServiceImpl implements AccountService {
 
         transaction = this.transactionRepository.save(transaction);
 
-        throwFailedTransferringByAntifraud(transaction);
+        throwFailedTransactionByAntifraud(transaction);
         processTransferring(dto, from, to, transaction);
     }
 
@@ -211,6 +210,7 @@ public class AccountServiceImpl implements AccountService {
         transaction = this.transactionRepository.save(transaction);
 
         try {
+            throwFailedTransactionByAntifraud(transaction);
             processPayment(account, dto);
             this.accountRepository.save(account);
 
@@ -305,7 +305,7 @@ public class AccountServiceImpl implements AccountService {
         return (10 - (sum % 10)) % 10;
     }
 
-    private void throwFailedTransferringByAntifraud(Transaction transaction) {
+    private void throwFailedTransactionByAntifraud(Transaction transaction) {
         if (accountAntifraudClient.isFraudulent(transaction)) {
             transaction.setStatus(TransactionStatus.FAILED);
             transactionRepository.save(transaction);

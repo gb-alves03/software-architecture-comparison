@@ -3,22 +3,17 @@ import { check, sleep, group } from "k6";
 
 export let options = {
     stages: [
-        { duration: '30s', target: 50 },
-
-        { duration: '1m', target: 200 },
-        { duration: '1m', target: 400 },
-        { duration: '1m', target: 600 },
-
-        { duration: '2m', target: 600 },
-
-        { duration: '1m', target: 0 }
+        { duration: '1m', target: 10 },
+        { duration: '2m', target: 50 },
+        { duration: '3m', target: 100 },
+        { duration: '2m', target: 0 }
     ],
     tags: {
-        architecture: 'microservice'
+        architecture: 'monolith'
     }
 };
 
-const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';
+const BASE_URL = 'http://banking-app-monolith:8080/v1/accounts';
 const params = { headers: { 'Content-Type': 'application/json' } };
 
 export function setup() {

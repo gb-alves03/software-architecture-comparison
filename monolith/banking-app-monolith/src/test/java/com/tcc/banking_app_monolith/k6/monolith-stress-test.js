@@ -14,11 +14,11 @@ export let options = {
         { duration: '1m', target: 0 }
     ],
     tags: {
-        architecture: 'microservice'
+        architecture: 'monolith'
     }
 };
 
-const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';
+const BASE_URL = 'http://banking-app-monolith:8080/v1/accounts';
 const params = { headers: { 'Content-Type': 'application/json' } };
 
 export function setup() {

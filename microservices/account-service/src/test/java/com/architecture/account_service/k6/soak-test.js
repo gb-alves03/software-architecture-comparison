@@ -4,7 +4,10 @@ import { check, sleep, group } from "k6";
 export let options = {
 	stages: [
 		{ duration: '1m', target: 20 },
-	]
+	],
+	tags: {
+        architecture: 'microservice'
+    }
 };
 
 const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';

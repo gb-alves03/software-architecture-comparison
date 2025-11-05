@@ -2,53 +2,54 @@ import http from "k6/http";
 import { check, sleep, group } from "k6";
 
 export let options = {
-	vus: 20,
-	duration: '1m',
+	stages: [
+		{ duration: '1m', target: 20 },
+	],
 	tags: {
-	    architecture: 'microservice'
+	    architecture: 'monolith'
 	}
 };
 
-const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';
+const BASE_URL = 'http://banking-app-monolith:8080/v1/accounts';
 const params = { headers: { 'Content-Type': 'application/json' } };
 
 export function setup() {
 	function createAccount(email) {
-		const payload = JSON.stringify({
-			name: 'User Test',
-			email,
-			phone: '+5516999999999'
-		});
+			const payload = JSON.stringify({
+				name: 'User Test',
+				email,
+				phone: '+5516999999999'
+			});
 
-		const res = http.post(`${BASE_URL}`, payload, params);
-		check(res, { 'OK': (r) => r.status === 200 });
+			const res = http.post(`${BASE_URL}`, payload, params);
+			check(res, { 'OK': (r) => r.status === 200 });
 
-		const body = JSON.parse(res.body);
-		return body.accountId;
-	}
+			const body = JSON.parse(res.body);
+			return body.accountId;
+		}
 
-	const accountId1 = createAccount(`user.${Math.floor(Math.random() * 1000)}@example.com`);
-	const accountId2 = createAccount(`user.${Math.floor(Math.random() * 1000)}@example.com`);
+		const accountId1 = createAccount(`user.${Math.floor(Math.random() * 1000)}@example.com`);
+		const accountId2 = createAccount(`user.${Math.floor(Math.random() * 1000)}@example.com`);
 
-	http.post(`${BASE_URL}/transactions/deposit`, JSON.stringify({
-		accountId: accountId1,
-		amount: 100000
-	}), params);
+		http.post(`${BASE_URL}/transactions/deposit`, JSON.stringify({
+			accountId: accountId1,
+			amount: 100000
+		}), params);
 
-	return { accountId1, accountId2 };
+		return { accountId1, accountId2 };
 }
 
 export default function(data) {
 	const { accountId1, accountId2 } = data;
-
+	
 	group('Deposit', function() {
 		const res = http.post(`${BASE_URL}/transactions/deposit`, JSON.stringify({
-			accountId: accountId1,
-			amount: 500
-		}), params);
+		        accountId: accountId1,
+		        amount: 50
+		    }), params);
 		check(res, { 'OK': (r) => r.status === 200 });
 	});
-
+	
 	group('Transfer', function() {
 		const res = http.post(`${BASE_URL}/transactions/transfer`, JSON.stringify({
 			from: accountId1,
@@ -83,6 +84,6 @@ export default function(data) {
 		}), params);
 		check(res, { 'OK': (r) => r.status === 200 });
 	});
-
+	
 	sleep(1);
 }

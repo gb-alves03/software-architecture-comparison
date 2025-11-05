@@ -29,7 +29,10 @@ export let options = {
 		// cooldown
 		{ duration: '1m', target: 10 },
 		{ duration: '30s', target: 0 }
-	]
+	],
+	tags: {
+        architecture: 'microservice'
+    }
 };
 
 const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';

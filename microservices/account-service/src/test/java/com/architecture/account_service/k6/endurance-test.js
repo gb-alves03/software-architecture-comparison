@@ -8,7 +8,10 @@ export let options = {
         { duration: '30m', target: 50 },
         { duration: '5m', target: 20 },
         { duration: '5m', target: 0 }
-    ]
+    ],
+    tags: {
+        architecture: 'microservice'
+    }
 };
 
 const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';

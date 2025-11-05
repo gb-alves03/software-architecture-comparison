@@ -2,14 +2,40 @@ import http from "k6/http";
 import { check, sleep, group } from "k6";
 
 export let options = {
-	vus: 20,
-	duration: '1m',
+	stages: [
+		{ duration: '30s', target: 10 },
+
+		{ duration: '5s', target: 200 },
+		{ duration: '20s', target: 200 },
+		{ duration: '5s', target: 0 },
+
+		{ duration: '1m', target: 30 },
+
+		{ duration: '10s', target: 400 },
+		{ duration: '30s', target: 400 },
+		{ duration: '10s', target: 0 },
+
+		{ duration: '1m', target: 25 },
+
+		{ duration: '3s', target: 150 },
+		{ duration: '7s', target: 0 },
+		{ duration: '3s', target: 250 },
+		{ duration: '7s', target: 0 },
+		{ duration: '3s', target: 350 },
+		{ duration: '7s', target: 0 },
+
+		{ duration: '10m', target: 50 },
+
+		// cooldown
+		{ duration: '1m', target: 10 },
+		{ duration: '30s', target: 0 }
+	],
 	tags: {
-	    architecture: 'microservice'
+	    architecture: 'monolith'
 	}
 };
 
-const BASE_URL = 'http://banking-microservice-account:8080/v1/accounts';
+const BASE_URL = 'http://banking-app-monolith:8080/v1/accounts';
 const params = { headers: { 'Content-Type': 'application/json' } };
 
 export function setup() {
@@ -23,8 +49,7 @@ export function setup() {
 		const res = http.post(`${BASE_URL}`, payload, params);
 		check(res, { 'OK': (r) => r.status === 200 });
 
-		const body = JSON.parse(res.body);
-		return body.accountId;
+		return JSON.parse(res.body).accountId;
 	}
 
 	const accountId1 = createAccount(`user.${Math.floor(Math.random() * 1000)}@example.com`);
@@ -44,7 +69,7 @@ export default function(data) {
 	group('Deposit', function() {
 		const res = http.post(`${BASE_URL}/transactions/deposit`, JSON.stringify({
 			accountId: accountId1,
-			amount: 500
+			amount: 50
 		}), params);
 		check(res, { 'OK': (r) => r.status === 200 });
 	});

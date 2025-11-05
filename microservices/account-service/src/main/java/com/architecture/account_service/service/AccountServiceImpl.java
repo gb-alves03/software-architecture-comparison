@@ -137,9 +137,8 @@ public class AccountServiceImpl implements AccountService {
         account.setBalance(BigDecimal.ZERO);
         account.validate();
 
-        Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(1000));
+        Card card = generateNewCard(account, CardType.CREDIT, new BigDecimal(70000));
         account.setCard(card);
-        ;
 
         this.ownerRepository.save(owner);
         account = this.accountRepository.save(account);
@@ -152,7 +151,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void transfer(TransferDTO.Input input) {
         if (input == null || input.from() == null || input.to() == null || input.amount() == null) {
-            throw new RuntimeException("Transper input, from, to and amount cannot be null");
+            throw new RuntimeException("Transfer input, from, to and amount cannot be null");
         }
         if (input.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException(Constants.AMOUNT_MUST_BE_GREATHER_THAN_ZERO);
@@ -176,6 +175,7 @@ public class AccountServiceImpl implements AccountService {
         transaction = this.transactionRepository.save(transaction);
 
         boolean fraudulent = antiFraudService.isFraudulent(transaction);
+        System.out.println(fraudulent);
 
         if (fraudulent) {
             transaction.setStatus(TransactionStatus.FAILED);

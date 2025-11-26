@@ -1,0 +1,349 @@
+version: "3.8"
+
+services:
+  banking-app-monolith:
+    build:
+      context: ./monolith/banking-app-monolith
+    container_name: banking_app_monolith
+    depends_on:
+      banking-monolith-database:
+        condition: service_started
+      rabbit-mq:
+        condition: service_healthy
+      banking-microservice-account-database:
+        condition: service_started
+      antifraud-service-api:
+        condition: service_started
+      notification-service-api:
+        condition: service_started
+    ports:
+      - 8085:8080
+    networks:
+      - monolith-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banking-monolith-database:5432/banking_monolith_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud-service-api:8080
+      NOTIFICATION_URL: http://notification-service-api:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  banking-monolith-database:
+    image: postgres:14.3-alpine
+    container_name: banking_monolith_database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: banking_monolith_db
+    ports:
+      - 5434:5432
+    networks:
+      - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  banking-microservice-account:
+    build:
+      context: ./microservices/account-service
+    container_name: banking-microservice-account
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+      banking-microservice-account-database:
+        condition: service_started
+      antifraud-service-api:
+        condition: service_started
+      notification-service-api:
+        condition: service_started
+    ports:
+      - 8081:8080
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banking-microservice-account-database:5432/banking-microservice-account
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud-service-api:8080
+      NOTIFICATION_URL: http://notification-service-api:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  banking-microservice-payment:
+    build:
+      context: ./microservices/payment-service
+    container_name: banking-microservice-payment
+    depends_on:
+      rabbit-mq:
+        condition: service_healthy
+      banking-microservice-account-database:
+        condition: service_started
+      antifraud-service-api:
+        condition: service_started
+      notification-service-api:
+        condition: service_started
+    ports:
+      - 8082:8080
+    networks:
+      - microservice-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://banking-microservice-payment-database:5432/banking-microservice-payment
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      ANTIFRAUD_URL: http://antifraud-service-api:8080
+      NOTIFICATION_URL: http://notification-service-api:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  banking-microservice-account-database:
+    image: postgres:14.3-alpine
+    container_name: banking-microservice-account-database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: banking-microservice-account
+    ports:
+      - 5433:5432
+    networks:
+      - microservice-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  banking-microservice-payment-database:
+    image: postgres:14.3-alpine
+    container_name: banking-microservice-payment-database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: banking-microservice-payment
+    ports:
+      - 5435:5432
+    networks:
+      - microservice-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  notification-service-api:
+    build:
+      context: notification-service
+    container_name: notification_service_api
+    ports:
+      - 8083:8080
+    networks:
+      - microservice-network
+      - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  antifraud-service-api:
+    build:
+      context: antifraud-service
+    container_name: antifraud_service_api
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+    ports:
+      - 8084:8080
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://root:example@mongodb:27017/fraud-db?authSource=admin
+    networks:
+      - microservice-network
+      - monolith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    command: redis-server --appendonly yes
+    networks:
+      - microservice-network
+      - monolith-network
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - microservice-network
+      - monolith-network
+
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8087:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - microservice-network
+      - monolith-network
+
+  rabbit-mq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - microservice-network
+      - monolith-network
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6
+    ports:
+      - "6565:6565"
+    depends_on:
+      - banking-microservice-account
+      - influxdb
+    networks:
+      - microservice-network
+      - monolith-network
+    volumes:
+      - ./microservices/account-service/src/test/java/com/architecture/account_service/k6:/scripts/microservice
+      - ./monolith/banking-app-monolith/src/test/java/com/tcc/banking_app_monolith/k6:/scripts/monolith
+    entrypoint: ["tail", "-f", "/dev/null"]
+    environment:
+      K6_OUT: "influxdb=http://influxdb:8086/k6_metrics"
+      INFLUXDB_USER: "admin"
+      INFLUXDB_PASSWORD: "admin123"
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6_metrics
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin123
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    networks:
+      - microservice-network
+      - monolith-network
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - microservice-network
+      - monolith-network
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+networks:
+  microservice-network:
+    driver: bridge
+  monolith-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+    driver: local
+  mongo_data:
+  redis_data:
+  influxdb-data:
+  grafana-storage:

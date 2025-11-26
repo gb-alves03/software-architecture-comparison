@@ -64,7 +64,7 @@ Composto pelos seguintes serviços:
 ## 📖 Objetivo do TCC
 - Comparar diferentes **arquiteturas de software** aplicadas ao mesmo domínio (aplicação bancária).
 - Avaliar **métricas de desempenho**, **consistência**, **manutenibilidade** e **custos operacionais**.
-- Utilizar ferramentas de monitoramento como **Grafana, Prometheus, Datadog** e realizar **testes de carga com JMeter**.
+- Utilizar ferramentas de monitoramento como **Grafana e InfluxDB** além de realizar **testes de carga com K6**.
 
 ---
 

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: banking-app-monolith
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+rabbitmq:
+  host: ${RABBITMQ_HOST}
+  port: ${RABBITMQ_PORT}
+  username: ${RABBITMQ_USERNAME}
+  password: ${RABBITMQ_PASSWORD}
+
+antifraud:
+  url: ${ANTIFRAUD_URL}
+
+notification:
+  url: ${NOTIFICATION_URL}
